@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import './Dashboard.css';
 
-// URL corretto - usa /me invece di /profile
+// URL dei servizi
 const USER_SERVICE_URL = 'http://localhost:5001/api/Auth';
+const BANK_SERVICE_URL = 'http://localhost:5004/api/payments';
 
 const UserProfileSection = () => {
     const navigate = useNavigate();
     const token = localStorage.getItem('authToken');
     
     const [profile, setProfile] = useState(null);
+    const [balance, setBalance] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     
@@ -21,23 +24,30 @@ const UserProfileSection = () => {
             return;
         }
         
-        const fetchProfile = async () => {
+        const fetchUserData = async () => {
             setLoading(true);
             setError(null);
             try {
-                // USA L'ENDPOINT CORRETTO: /me invece di /profile
-                const response = await axios.get(`${USER_SERVICE_URL}/me`, {
+                const config = {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
-                });
+                };
+
+                // Fetch parallelo di profilo e saldo
+                const [profileResponse, balanceResponse] = await Promise.all([
+                    axios.get(`${USER_SERVICE_URL}/me`, config),
+                    axios.get(`${BANK_SERVICE_URL}/balance`, config)
+                ]);
                 
-                setProfile(response.data);
+                setProfile(profileResponse.data);
+                setBalance(balanceResponse.data.balance);
             } catch (err) {
-                console.error("Errore nel recupero del profilo:", err.response || err);
+                console.error("Errore nel recupero dei dati:", err.response || err);
                 
+                // Gestione errori specifica
                 if (err.response?.status === 404) {
-                    setError("Endpoint non trovato. Assicurati che il backend abbia l'endpoint /api/auth/me");
+                    setError("Endpoint non trovato. Verifica che i servizi siano attivi.");
                 } else if (err.response?.status === 401) {
                     setError("Token non valido. Effettua nuovamente il login.");
                     localStorage.removeItem('authToken');
@@ -50,119 +60,64 @@ const UserProfileSection = () => {
             }
         };
 
-        fetchProfile();
+        fetchUserData();
     }, [token, navigate]);
 
+    // Funzione per determinare la classe del saldo
+    const getBalanceClass = () => {
+        if (balance === null) return 'balance-neutral';
+        return balance >= 0 ? 'balance-positive' : 'balance-negative';
+    };
+
     return (
-        <div style={styles.container}>
+        <div className="profile-container">
             <button 
                 onClick={() => navigate('/dashboard')} 
-                style={styles.backButton}>
+                className="back-button"
+            >
                 &larr; Torna alla Dashboard
             </button>
-            <h1 style={styles.header}>Dettagli del Tuo Account</h1>
+            <h1 className="profile-header">Dettagli del Tuo Account</h1>
             
-            {loading && <p style={{textAlign: 'center', color: '#374151'}}>Caricamento dati...</p>}
-            {error && <div style={styles.errorMessage}>{error}</div>}
+            {loading && <p className="loading-text">Caricamento dati...</p>}
+            {error && <div className="error-message">{error}</div>}
 
             {profile && (
-                <div style={styles.card}>
-                    <h2 style={styles.cardTitle}>Profilo Utente</h2>
-                    <div style={styles.detailRow}>
-                        <span style={styles.label}>Nome Utente:</span>
-                        <span style={styles.value}>{profile.username || cachedUsername || 'Non Specificato'}</span>
+                <div className="profile-card">
+                    <h2 className="profile-card-title">Profilo Utente</h2>
+                    <div className="detail-row">
+                        <span className="detail-label">Nome Utente:</span>
+                        <span className="detail-value">{profile.username || cachedUsername || 'Non Specificato'}</span>
                     </div>
-                    <div style={styles.detailRow}>
-                        <span style={styles.label}>Email:</span>
-                        <span style={styles.value}>{profile.email || 'N/A'}</span>
+                    <div className="detail-row">
+                        <span className="detail-label">Email:</span>
+                        <span className="detail-value">{profile.email || 'N/A'}</span>
                     </div>
-                    <div style={styles.detailRow}>
-                        <span style={styles.label}>ID Utente:</span>
-                        <span style={styles.value}>{profile.userId || profile.id || 'N/A'}</span>
+                    <div className="detail-row">
+                        <span className="detail-label">ID Utente:</span>
+                        <span className="detail-value">{profile.userId || profile.id || 'N/A'}</span>
                     </div>
-                    <div style={styles.detailRow}>
-                        <span style={styles.label}>Registrato il:</span>
-                        <span style={styles.value}>
+                    <div className="detail-row">
+                        <span className="detail-label">Registrato il:</span>
+                        <span className="detail-value">
                             {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString('it-IT') : 'N/A'}
+                        </span>
+                    </div>
+                    {/* SEZIONE SALDO */}
+                    <div className="detail-row">
+                        <span className="detail-label">Saldo Conto:</span>
+                        <span className={`detail-value balance-text ${getBalanceClass()}`}>
+                            {balance !== null ? `${balance.toFixed(2)} €` : 'N/A'}
                         </span>
                     </div>
                 </div>
             )}
             
-            <p style={styles.infoText}>
-                Questi dati sono gestiti e forniti dal microservizio utente.
+            <p className="info-text">
+                Questi dati sono gestiti e forniti dai microservizi utente e banca.
             </p>
         </div>
     );
-};
-
-// I tuoi stili rimangono uguali...
-const styles = {
-    container: {
-        padding: '20px',
-        maxWidth: '600px',
-        margin: '0 auto',
-        backgroundColor: '#f9fafb',
-        borderRadius: '8px',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
-    },
-    header: {
-        fontSize: '2em',
-        fontWeight: 'bold',
-        color: '#1f2937',
-        borderBottom: '2px solid #e5e7eb',
-        paddingBottom: '10px',
-        marginBottom: '20px'
-    },
-    backButton: {
-        backgroundColor: 'transparent',
-        border: 'none',
-        color: '#4f46e5',
-        cursor: 'pointer',
-        marginBottom: '15px',
-        fontWeight: '500',
-    },
-    card: {
-        backgroundColor: '#ffffff',
-        padding: '20px',
-        borderRadius: '8px',
-        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
-        marginBottom: '20px',
-    },
-    cardTitle: {
-        fontSize: '1.5em',
-        color: '#374151',
-        marginBottom: '15px',
-        borderBottom: '1px dashed #e5e7eb',
-        paddingBottom: '10px'
-    },
-    detailRow: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        padding: '8px 0',
-        borderBottom: '1px solid #f3f4f6'
-    },
-    label: {
-        fontWeight: '600',
-        color: '#6b7280'
-    },
-    value: {
-        color: '#1f2937',
-        wordBreak: 'break-all'
-    },
-    errorMessage: {
-        backgroundColor: '#fecaca',
-        color: '#ef4444',
-        padding: '10px',
-        borderRadius: '6px',
-        marginBottom: '15px',
-        fontWeight: '500'
-    },
-    infoText: {
-        fontSize: '0.875em',
-        color: '#9ca3af',
-        textAlign: 'center'
-    }
 };
 
 export default UserProfileSection;

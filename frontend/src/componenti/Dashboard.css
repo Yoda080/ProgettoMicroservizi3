@@ -154,3 +154,224 @@
     background: linear-gradient(90deg, #6b8e23, #8a9a5b);
     border-radius: 10px 10px 0 0;
 }
+.bank-container {
+    padding: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+    background-color: #f9fafb;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.bank-header {
+    font-size: 2em;
+    font-weight: bold;
+    color: #1f2937;
+    border-bottom: 2px solid #e5e7eb;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.back-button {
+    background-color: transparent;
+    border: none;
+    color: #4f46e5;
+    cursor: pointer;
+    margin-bottom: 15px;
+    font-weight: 500;
+}
+
+.balance-card {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.form-card {
+    background-color: #fefefe;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    margin-bottom: 20px;
+}
+
+.card-title {
+    font-size: 1.5em;
+    color: #374151;
+    margin-bottom: 15px;
+}
+
+.balance-text {
+    font-size: 3em;
+    font-weight: bolder;
+}
+
+.balance-positive {
+    color: #10b981; /* Green */
+}
+
+.balance-negative {
+    color: #ef4444; /* Red */
+}
+
+.balance-neutral {
+    color: #6b7280; /* Gray */
+}
+
+.input-field {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    box-sizing: border-box;
+}
+
+.deposit-button {
+    width: 100%;
+    padding: 12px;
+    background-color: #4f46e5;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.3s;
+}
+
+.deposit-button:hover {
+    background-color: #4338ca;
+}
+
+.button-disabled {
+    background-color: #9ca3af !important;
+    cursor: not-allowed;
+}
+
+.refresh-button {
+    padding: 8px 15px;
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background-color 0.3s;
+}
+
+.refresh-button:hover {
+    background-color: #2563eb;
+}
+
+.error-message {
+    color: #ef4444;
+    margin-top: 10px;
+    font-weight: 500;
+}
+
+.success-message {
+    color: #10b981;
+    margin-top: 10px;
+    font-weight: 500;
+}
+
+/* User Profile Section Styles */
+.profile-container {
+    padding: 20px;
+    max-width: 600px;
+    margin: 0 auto;
+    background-color: #f9fafb;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.profile-header {
+    font-size: 2em;
+    font-weight: bold;
+    color: #1f2937;
+    border-bottom: 2px solid #e5e7eb;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.back-button {
+    background-color: transparent;
+    border: none;
+    color: #4f46e5;
+    cursor: pointer;
+    margin-bottom: 15px;
+    font-weight: 500;
+}
+
+.profile-card {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    margin-bottom: 20px;
+}
+
+.profile-card-title {
+    font-size: 1.5em;
+    color: #374151;
+    margin-bottom: 15px;
+    border-bottom: 1px dashed #e5e7eb;
+    padding-bottom: 10px;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.detail-label {
+    font-weight: 600;
+    color: #6b7280;
+}
+
+.detail-value {
+    color: #1f2937;
+    word-break: break-all;
+}
+
+.balance-text {
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.balance-positive {
+    color: #059669;
+}
+
+.balance-negative {
+    color: #dc2626;
+}
+
+.balance-neutral {
+    color: #6b7280;
+}
+
+.loading-text {
+    text-align: center;
+    color: #374151;
+}
+
+.error-message {
+    background-color: #fecaca;
+    color: #ef4444;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    font-weight: 500;
+}
+
+.info-text {
+    font-size: 0.875em;
+    color: #9ca3af;
+    text-align: center;
+}

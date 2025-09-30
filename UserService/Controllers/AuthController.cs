@@ -156,7 +156,6 @@ public async Task<IActionResult> GetCurrentUser()
 {
     try
     {
-        // Estrai l'ID utente dal token JWT
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(userIdClaim))
         {
@@ -184,18 +183,49 @@ public async Task<IActionResult> GetCurrentUser()
             return NotFound(new { message = "Utente non trovato." });
         }
 
+        // 🆕 AGGIUNGI: Chiamata al servizio bank per ottenere il saldo
+        decimal balance = 0;
+        try
+        {
+            // Recupera il token per passarlo al servizio bank
+            var token = Request.Headers["Authorization"].ToString();
+            
+            // Chiama il servizio bank
+            using var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Add("Authorization", token);
+            
+            var balanceResponse = await httpClient.GetAsync($"http://bank_service:5004/api/payments/balance");
+            if (balanceResponse.IsSuccessStatusCode)
+            {
+                var balanceData = await balanceResponse.Content.ReadFromJsonAsync<BalanceResponse>();
+                balance = balanceData?.Balance ?? 0;
+            }
+        }
+        catch (Exception ex)
+        {
+            // Logga l'errore ma non fallisci l'intera richiesta
+            Console.WriteLine($"Errore nel recupero del saldo: {ex.Message}");
+        }
+
         return Ok(new
         {
             userId = user.Id,
             username = user.Username,
             email = user.Email,
-            createdAt = user.CreatedAt
+            createdAt = user.CreatedAt,
+            balance = balance // 🆕 Aggiungi il saldo
         });
     }
     catch (Exception ex)
     {
         return StatusCode(500, new { message = "Errore interno del server", error = ex.Message });
     }
+}
+
+// 🆕 Aggiungi questa classe
+public class BalanceResponse
+{
+    public decimal Balance { get; set; }
 }
 
         // GET: api/auth/check-email?email=test@example.com
