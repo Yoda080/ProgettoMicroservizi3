@@ -4484,11 +4484,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\ZALTERLAND\\Desktop\\ProgettoMicroservizi2-main\\BankService\\BankService.csproj",
+      "projectUniqueName": "C:\\Users\\ZALTERLAND\\Desktop\\propgetto finale\\ProgettoMicroservizi3\\BankService\\BankService.csproj",
       "projectName": "BankService",
-      "projectPath": "C:\\Users\\ZALTERLAND\\Desktop\\ProgettoMicroservizi2-main\\BankService\\BankService.csproj",
+      "projectPath": "C:\\Users\\ZALTERLAND\\Desktop\\propgetto finale\\ProgettoMicroservizi3\\BankService\\BankService.csproj",
       "packagesPath": "C:\\Users\\ZALTERLAND\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\ZALTERLAND\\Desktop\\ProgettoMicroservizi2-main\\BankService\\obj\\",
+      "outputPath": "C:\\Users\\ZALTERLAND\\Desktop\\propgetto finale\\ProgettoMicroservizi3\\BankService\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\ZALTERLAND\\AppData\\Roaming\\NuGet\\NuGet.Config"

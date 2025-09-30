@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 // URL corretto - usa /me invece di /profile
-const USER_SERVICE_URL = 'http://localhost:5001/api/auth';
+const USER_SERVICE_URL = 'http://localhost:5001/api/Auth';
 
 const UserProfileSection = () => {
     const navigate = useNavigate();

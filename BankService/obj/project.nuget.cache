@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "pa8hsXOmsjk=",
+  "dgSpecHash": "KZ1jrRUQPQA=",
   "success": true,
-  "projectFilePath": "C:\\Users\\ZALTERLAND\\Desktop\\ProgettoMicroservizi2-main\\BankService\\BankService.csproj",
+  "projectFilePath": "C:\\Users\\ZALTERLAND\\Desktop\\propgetto finale\\ProgettoMicroservizi3\\BankService\\BankService.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\ZALTERLAND\\.nuget\\packages\\azure.core\\1.25.0\\azure.core.1.25.0.nupkg.sha512",
     "C:\\Users\\ZALTERLAND\\.nuget\\packages\\azure.identity\\1.7.0\\azure.identity.1.7.0.nupkg.sha512",
@@ -90,19 +90,19 @@
     "C:\\Users\\ZALTERLAND\\.nuget\\packages\\system.threading.channels\\6.0.0\\system.threading.channels.6.0.0.nupkg.sha512",
     "C:\\Users\\ZALTERLAND\\.nuget\\packages\\system.threading.tasks.extensions\\4.5.4\\system.threading.tasks.extensions.4.5.4.nupkg.sha512",
     "C:\\Users\\ZALTERLAND\\.nuget\\packages\\system.windows.extensions\\6.0.0\\system.windows.extensions.6.0.0.nupkg.sha512",
-    "C:\\Users\\ZALTERLAND\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.18\\microsoft.aspnetcore.app.ref.8.0.18.nupkg.sha512",
-    "C:\\Users\\ZALTERLAND\\.nuget\\packages\\microsoft.netcore.app.host.win-x64\\8.0.18\\microsoft.netcore.app.host.win-x64.8.0.18.nupkg.sha512",
     "C:\\Users\\ZALTERLAND\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.18\\microsoft.netcore.app.ref.8.0.18.nupkg.sha512",
-    "C:\\Users\\ZALTERLAND\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.18\\microsoft.windowsdesktop.app.ref.8.0.18.nupkg.sha512"
+    "C:\\Users\\ZALTERLAND\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.18\\microsoft.windowsdesktop.app.ref.8.0.18.nupkg.sha512",
+    "C:\\Users\\ZALTERLAND\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.18\\microsoft.aspnetcore.app.ref.8.0.18.nupkg.sha512",
+    "C:\\Users\\ZALTERLAND\\.nuget\\packages\\microsoft.netcore.app.host.win-x64\\8.0.18\\microsoft.netcore.app.host.win-x64.8.0.18.nupkg.sha512"
   ],
   "logs": [
     {
       "code": "NU1902",
       "level": "Warning",
       "message": "Il pacchetto 'RestSharp' 110.2.0 presenta una vulnerabilità nota di gravità moderata, https://github.com/advisories/GHSA-4rr6-2v9v-wcpc",
-      "projectPath": "C:\\Users\\ZALTERLAND\\Desktop\\ProgettoMicroservizi2-main\\BankService\\BankService.csproj",
+      "projectPath": "C:\\Users\\ZALTERLAND\\Desktop\\propgetto finale\\ProgettoMicroservizi3\\BankService\\BankService.csproj",
       "warningLevel": 1,
-      "filePath": "C:\\Users\\ZALTERLAND\\Desktop\\ProgettoMicroservizi2-main\\BankService\\BankService.csproj",
+      "filePath": "C:\\Users\\ZALTERLAND\\Desktop\\propgetto finale\\ProgettoMicroservizi3\\BankService\\BankService.csproj",
       "libraryId": "RestSharp",
       "targetGraphs": [
         "net8.0"

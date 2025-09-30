@@ -13,3 +13,8 @@ BEGIN
     CREATE DATABASE [rentals_db];
 END;
 GO
+IF NOT EXISTS (SELECT name FROM master.dbo.sysdatabases WHERE name = N'payments_db')
+BEGIN
+    CREATE DATABASE [payments_db];
+END;
+GO

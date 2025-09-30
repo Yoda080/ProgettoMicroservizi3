@@ -71,7 +71,22 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// 3. DATABASE CONNECTION TEST MIGLIORATO
+// 3. APPLICA MIGRAZIONI DATABASE
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<PaymentsDbContext>(); // ✅ CORRETTO
+    try
+    {
+        dbContext.Database.Migrate();
+        Console.WriteLine("Database migrato con successo");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Errore durante migrazione database: {ex.Message}");
+    }
+}
+
+// 4. TEST CONNESSIONE DATABASE
 await TestDatabaseConnection(app);
 
 app.Run();
@@ -79,7 +94,7 @@ app.Run();
 async Task TestDatabaseConnection(WebApplication app)
 {
     using var scope = app.Services.CreateScope();
-    var dbContext = scope.ServiceProvider.GetRequiredService<PaymentsDbContext>();
+    var dbContext = scope.ServiceProvider.GetRequiredService<PaymentsDbContext>(); // ✅ CORRETTO
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
     
     var maxRetries = 10;
