@@ -1,0 +1,270 @@
+.App {
+  text-align: center;
+  min-height: 100vh;
+  /* 🌟 AGGIUNTA FONDAMENTALE PER IL 3D */
+  perspective: 1500px; /* Imposta la prospettiva per l'intera app */
+  background: linear-gradient(135deg, #f5f5f0 0%, #e8e8d8 100%); /* Gradiente beige */
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: 20px;
+  color: #6b8e23; /* Verde oliva */
+  font-weight: 600;
+  background: linear-gradient(135deg, #f5f5f0 0%, #e8e8d8 100%);
+}
+
+.loading::after {
+  content: '';
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(107, 142, 35, 0.3);
+  border-top: 3px solid #6b8e23;
+  border-radius: 50%;
+  margin-left: 10px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Reset di base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  color: #333;
+  background: linear-gradient(135deg, #f5f5f0 0%, #e8e8d8 100%);
+}
+
+/* Utility classes */
+.text-center {
+  text-align: center;
+}
+
+.mt-20 {
+  margin-top: 20px;
+}
+
+.mb-20 {
+  margin-bottom: 20px;
+}
+
+.text-olive-dark {
+  color: #556b2f;
+}
+
+.text-olive {
+  color: #6b8e23;
+}
+
+.text-olive-light {
+  color: #8a9a5b;
+}
+
+.bg-beige {
+  background-color: #f5f5f0;
+}
+
+.bg-beige-light {
+  background-color: #fffaf0;
+}
+
+/* Transizioni smooth */
+* {
+  transition: all 0.3s ease;
+}
+
+/* Scrollbar personalizzata */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f5f5f0;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #6b8e23 0%, #8a9a5b 100%);
+  border-radius: 5px;
+  border: 2px solid #f5f5f0;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #556b2f 0%, #6b8e23 100%);
+  transform: scale(1.1);
+}
+
+/* Effetti globali per elementi interattivi */
+button, input, select, textarea {
+  transform: translateZ(0);
+  transition: all 0.3s ease;
+}
+
+button:hover, input:focus, select:focus, textarea:focus {
+  transform: translateZ(10px);
+}
+
+/* Animazioni globali */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) translateZ(-100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) translateZ(0);
+  }
+}
+
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-50px) translateZ(-100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) translateZ(0);
+  }
+}
+
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(50px) translateZ(-100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) translateZ(0);
+  }
+}
+
+/* Classi di animazione applicabili */
+.fade-in {
+  animation: fadeIn 0.6s ease-out;
+}
+
+.slide-in-left {
+  animation: slideInFromLeft 0.6s ease-out;
+}
+
+.slide-in-right {
+  animation: slideInFromRight 0.6s ease-out;
+}
+
+/* Effetti di profondità per le card globali */
+.card-3d {
+  transform-style: preserve-3d;
+  transform: translateZ(0);
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+
+.card-3d:hover {
+  transform: translateZ(20px) rotateY(2deg) rotateX(1deg);
+  box-shadow: 0 20px 40px rgba(107, 142, 35, 0.15);
+}
+
+/* Stili per i messaggi globali */
+.message {
+  padding: 15px 20px;
+  border-radius: 8px;
+  margin: 15px 0;
+  font-weight: 500;
+  border-left: 4px solid;
+}
+
+.message.success {
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+  color: #2e7d32;
+  border-left-color: #4caf50;
+}
+
+.message.error {
+  background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+  color: #c62828;
+  border-left-color: #f44336;
+}
+
+.message.warning {
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+  color: #ef6c00;
+  border-left-color: #ff9800;
+}
+
+.message.info {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  color: #1565c0;
+  border-left-color: #2196f3;
+}
+
+/* Responsive design globale */
+@media (max-width: 768px) {
+  .App {
+    perspective: 1000px;
+  }
+  
+  .loading {
+    font-size: 18px;
+    flex-direction: column;
+    gap: 15px;
+  }
+}
+
+/* Focus styles per accessibilità */
+*:focus {
+  outline: 2px solid #6b8e23;
+  outline-offset: 2px;
+}
+
+/* Selezione del testo */
+::selection {
+  background-color: rgba(107, 142, 35, 0.3);
+  color: #556b2f;
+}
+
+::-moz-selection {
+  background-color: rgba(107, 142, 35, 0.3);
+  color: #556b2f;
+}
+
+/* Stili per i link globali */
+a {
+  color: #6b8e23;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  border-bottom: 1px solid transparent;
+}
+
+a:hover {
+  color: #556b2f;
+  border-bottom-color: #6b8e23;
+}
+
+/* Utility per bordi */
+.border-olive {
+  border: 1px solid #d2cdb0;
+}
+
+.border-olive-dark {
+  border: 1px solid #6b8e23;
+}
+
+/* Ombre globali */
+.shadow-olive {
+  box-shadow: 0 6px 15px rgba(107, 142, 35, 0.15);
+}
+
+.shadow-olive-hover {
+  box-shadow: 0 10px 25px rgba(107, 142, 35, 0.2);
+}

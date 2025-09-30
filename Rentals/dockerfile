@@ -1,0 +1,30 @@
+# -----------------------------------------------------------
+# FASE 1: BUILD (Compilazione del codice) - NET 8 STABILE
+# -----------------------------------------------------------
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Copia l'intera cartella del microservizio
+COPY Rentals/ ./Rentals/ 
+
+# Vai nella directory del progetto all'interno del container
+WORKDIR /src/Rentals
+
+# Rimuoviamo la riga "RUN dotnet restore..."
+
+# Consolidiamo: Esegui solo 'dotnet publish'. Rimuovendo '--no-restore', 
+# forziamo il download completo e la risoluzione di tutte le dipendenze (incluse gli Analyzers).
+RUN dotnet publish "Rentals.csproj" -c Release -o /app/publish
+
+# -----------------------------------------------------------
+# FASE 2: FINALIZZAZIONE (Immagine di Runtime leggera) - NET 8 STABILE
+# -----------------------------------------------------------
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+WORKDIR /app
+
+# Copia i file compilati
+COPY --from=build /app/publish .
+
+EXPOSE 5003
+
+ENTRYPOINT ["dotnet", "Rentals.dll"]

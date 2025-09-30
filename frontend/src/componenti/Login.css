@@ -1,0 +1,315 @@
+@import '../Style/variables.css';
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.auth-container {
+    background: linear-gradient(135deg, #f5f5f0 0%, #e8e8d8 100%); /* Gradiente beige */
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.container {
+    background: linear-gradient(135deg, #fffaf0 0%, #f5f5f0 100%); /* Gradiente beige */
+    border-radius: 12px;
+    box-shadow: 0 15px 35px rgba(107, 142, 35, 0.15); /* Ombra verde oliva tenue */
+    width: 100%;
+    max-width: 450px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid #d2cdb0; /* Bordo beige scuro */
+    perspective: 1000px;
+    transform: translateZ(0);
+}
+
+.header {
+    background: linear-gradient(135deg, #6b8e23 0%, #556b2f 100%); /* Gradiente verde oliva */
+    color: white;
+    padding: 30px 25px;
+    text-align: center;
+    transform: translateZ(0);
+    border-bottom: 3px solid #8a9a5b;
+}
+
+.header h2 {
+    font-weight: 600;
+    font-size: 28px;
+    letter-spacing: 0.5px;
+}
+
+.form-container {
+    padding: 35px 30px;
+}
+
+.form-group {
+    margin-bottom: 25px;
+    position: relative;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: 600;
+    color: #556b2f; /* Verde oliva scuro */
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 16px;
+    border: 2px solid #d2cdb0; /* Bordo beige scuro */
+    border-radius: 8px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    background-color: #fffaf0; /* Beige molto chiaro */
+    color: #333;
+}
+
+.form-group input:focus {
+    border-color: #6b8e23; /* Verde oliva */
+    box-shadow: 0 0 0 3px rgba(107, 142, 35, 0.15);
+    transform: rotateX(1deg) translateY(-2px) translateZ(1px);
+    outline: none;
+    background-color: #fff;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 15px;
+    top: 42px;
+    cursor: pointer;
+    color: #8a9a5b; /* Verde oliva medio */
+    transition: color 0.3s ease;
+}
+
+.password-toggle:hover {
+    color: #556b2f; /* Verde oliva scuro */
+}
+
+.btn {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #6b8e23 0%, #556b2f 100%); /* Gradiente verde oliva */
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    border: 2px solid transparent;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #556b2f 0%, #6b8e23 100%);
+    transform: scale(1.02) translateZ(2px);
+    border-color: #8a9a5b;
+}
+
+.btn:disabled {
+    background: #d2cdb0;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.message {
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    text-align: center;
+    font-weight: 500;
+    border: 1px solid;
+}
+
+.error {
+    background-color: #ffebee;
+    color: #c62828;
+    border-color: #ef9a9a;
+}
+
+.success {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    border-color: #a5d6a7;
+}
+
+.switch {
+    text-align: center;
+    margin-top: 25px;
+    color: #666;
+    font-size: 14px;
+}
+
+.switch a {
+    color: #6b8e23; /* Verde oliva */
+    text-decoration: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.3s ease;
+    border-bottom: 1px solid transparent;
+}
+
+.switch a:hover {
+    color: #556b2f; /* Verde oliva scuro */
+    text-decoration: none;
+    border-bottom-color: #6b8e23;
+}
+
+.database-info {
+    background: linear-gradient(135deg, #f5f5f0 0%, #e8e8d8 100%);
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 25px;
+    font-size: 14px;
+    color: #556b2f;
+    border: 1px solid #d2cdb0;
+}
+
+.database-info h3 {
+    margin-bottom: 12px;
+    color: #556b2f;
+    font-size: 16px;
+    border-bottom: 1px solid #d2cdb0;
+    padding-bottom: 8px;
+}
+
+.api-status {
+    display: flex;
+    align-items: center;
+    margin-top: 12px;
+    font-weight: 500;
+}
+
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 10px;
+    border: 2px solid white;
+    box-shadow: 0 0 5px rgba(0,0,0,0.2);
+}
+
+.connected {
+    background-color: #4caf50;
+    animation: pulse 2s infinite;
+}
+
+.disconnected {
+    background-color: #f44336;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.validation-error {
+    color: #d32f2f;
+    font-size: 12px;
+    margin-top: 8px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Effetti aggiuntivi per il container */
+.container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #6b8e23, #8a9a5b, #6b8e23);
+    z-index: 1;
+}
+
+/* Animazione di ingresso per il form */
+.auth-forms {
+    position: relative;
+    transition: transform 0.5s ease;
+    transform-style: preserve-3d;
+    animation: slideIn 0.6s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(30px) rotateX(-10deg);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) rotateX(0);
+    }
+}
+
+/* Responsive design */
+@media (max-width: 480px) {
+    .container {
+        border-radius: 8px;
+        margin: 10px;
+    }
+    
+    .form-container {
+        padding: 25px 20px;
+    }
+    
+    .header {
+        padding: 25px 20px;
+    }
+    
+    .header h2 {
+        font-size: 24px;
+    }
+}
+
+/* Miglioramenti per l'accessibilità */
+.form-group input::placeholder {
+    color: #a0a0a0;
+    opacity: 1;
+}
+
+.btn:focus {
+    outline: 2px solid #6b8e23;
+    outline-offset: 2px;
+}
+
+/* Effetto di profondità per i campi input */
+.form-group {
+    transform-style: preserve-3d;
+}
+
+.form-group input {
+    transform: translateZ(0);
+    transition: all 0.3s ease;
+}

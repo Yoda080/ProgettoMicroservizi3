@@ -1,0 +1,1 @@
+ho creato un applicazione a microservizi dove il compito era creare un database sql dove ho inserito movie,noleggio,e user. poi ho sincronizzato tutti i microservizi. prossimo compito da fare e creare un interfaccia dove posso mettere immagini bottoni form per il login e interfaccia paganmento per l noleggio film.

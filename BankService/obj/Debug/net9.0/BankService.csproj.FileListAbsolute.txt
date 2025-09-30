@@ -1,0 +1,8 @@
+C:\Users\ZALTERLAND\Desktop\ProgettoMicroservizi2-main\BankService\obj\Debug\net9.0\BankService.csproj.AssemblyReference.cache
+C:\Users\ZALTERLAND\Desktop\ProgettoMicroservizi2-main\BankService\obj\Debug\net9.0\rpswa.dswa.cache.json
+C:\Users\ZALTERLAND\Desktop\ProgettoMicroservizi2-main\BankService\obj\Debug\net9.0\BankService.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\ZALTERLAND\Desktop\ProgettoMicroservizi2-main\BankService\obj\Debug\net9.0\BankService.AssemblyInfoInputs.cache
+C:\Users\ZALTERLAND\Desktop\ProgettoMicroservizi2-main\BankService\obj\Debug\net9.0\BankService.AssemblyInfo.cs
+C:\Users\ZALTERLAND\Desktop\ProgettoMicroservizi2-main\BankService\obj\Debug\net9.0\BankService.csproj.CoreCompileInputs.cache
+C:\Users\ZALTERLAND\Desktop\ProgettoMicroservizi2-main\BankService\obj\Debug\net9.0\BankService.MvcApplicationPartsAssemblyInfo.cs
+C:\Users\ZALTERLAND\Desktop\ProgettoMicroservizi2-main\BankService\obj\Debug\net9.0\BankService.MvcApplicationPartsAssemblyInfo.cache

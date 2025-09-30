@@ -1,0 +1,19 @@
+:root {
+  /* Sfondi e colori di base */
+  --color-background-light: #f0f4f8; /* Grigio-azzurro chiaro */
+  --color-card-background: #ffffff; /* Bianco */
+  --color-text-dark: #334e68; /* Blu scuro */
+  --color-text-medium: #5b7188; /* Blu medio */
+  
+  /* Colori per le azioni */
+  --color-primary-action: #007bff; /* Blu acceso per bottoni principali */
+  --color-primary-action-hover: #0056b3; /* Blu acceso hover */
+  --color-secondary-action: #5b7188; /* Blu medio per bottoni secondari */
+  --color-secondary-action-hover: #435b71; /* Blu medio hover */
+  --color-logout: #e53e3e; /* Rosso per il logout */
+  --color-logout-hover: #c53030; /* Rosso hover */
+  
+  /* Altri colori */
+  --color-border-light: #c9d6e4; /* Bordo sottile */
+  --color-shadow-light: rgba(0, 0, 0, 0.05); /* Ombra leggera */
+}
