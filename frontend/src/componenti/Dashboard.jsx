@@ -65,7 +65,7 @@ const Dashboard = () => {
                     {/* 🚨 NUOVO PULSANTE: Profilo Utente */}
                     <button
                         onClick={handleUserProfile}
-                        className="profile-btn" // Aggiungi la classe CSS
+                        className="card-button profile" // Aggiungi la classe CSS
                         style={{ marginRight: '10px' }} // Stile temporaneo in attesa del CSS
                     >
                         Vedi Profilo Utente
@@ -111,7 +111,7 @@ const Dashboard = () => {
                     <p>Controlla il tuo saldo e deposita fondi</p>
                     <button
                         onClick={handleBank}
-                        className="card-button bank" // Aggiungi la classe CSS 'bank'
+                        className="card-button-bank" // Aggiungi la classe CSS 'bank'
                     >
                         Vai al Conto Banca
                     </button>

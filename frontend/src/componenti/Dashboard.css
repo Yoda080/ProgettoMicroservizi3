@@ -99,18 +99,7 @@
 }
 
 /* Stile dei bottoni all'interno delle card */
-.card-button {
-    border: none;
-    color: white;
-    padding: 12px 18px;
-    border-radius: 6px;
-    cursor: pointer;
-    margin-top: 15px;
-    transition: all 0.3s ease;
-    font-weight: 500;
-    width: 100%;
-    border: 2px solid transparent;
-}
+
 
 /* Colore specifico per il bottone del catalogo film */
 .card-button.primary {
@@ -375,3 +364,244 @@
     color: #9ca3af;
     text-align: center;
 }
+
+/* 🌟 Stile per il bottone Banca con effetto 3D */
+.card-button-bank {
+    background: linear-gradient(135deg, #556b2f 0%, #8a9a5b 100%);
+    border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
+    transform-style: preserve-3d;
+    transform: translateZ(0);
+    transition: all 0.4s ease;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    text-align: center;
+    display: inline-block;
+    text-decoration: none;
+}
+
+.card-button-bank::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.card-button-bank:hover {
+    background: linear-gradient(135deg, #3730a3 0%, #4f46e5 100%);
+    transform: translateY(-3px) translateZ(10px);
+    box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
+    border-color: #6366f1;
+}
+
+.card-button-bank:hover::before {
+    left: 100%;
+}
+
+/* 🌟 Stile per il bottone Profilo Utente con effetto 3D */
+.card-button.profile {
+    background: linear-gradient(135deg, #8a9a5b 0%, #6b8e23 100%);
+    border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
+    transform-style: preserve-3d;
+    transform: translateZ(0);
+    transition: all 0.4s ease;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    text-align: center;
+    display: inline-block;
+    text-decoration: none;
+}
+
+.card-button.profile::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.card-button.profile:hover {
+    background: linear-gradient(135deg, #6b8e23 0%, #8a9a5b 100%);
+    transform: translateY(-3px) translateZ(10px);
+    box-shadow: 0 8px 20px rgba(107, 142, 35, 0.3);
+    border-color: #aab586;
+}
+
+.card-button.profile:hover::before {
+    left: 100%;
+}
+
+/* 🌟 Stile per il bottone di logout con effetto 3D */
+.logout-btn {
+    background: linear-gradient(135deg, #8a9a5b 0%, #556b2f 100%);
+    border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
+    transform-style: preserve-3d;
+    transform: translateZ(0);
+    transition: all 0.4s ease;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    text-align: center;
+    display: inline-block;
+    text-decoration: none;
+}
+
+.logout-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.logout-btn:hover {
+    background: linear-gradient(135deg, #556b2f 0%, #8a9a5b 100%);
+    transform: translateY(-2px) translateZ(8px);
+    box-shadow: 0 6px 15px rgba(107, 142, 35, 0.25);
+    border-color: #6b8e23;
+}
+
+.logout-btn:hover::before {
+    left: 100%;
+}
+
+/* 🌟 Stile per il back-button con effetto 3D */
+.back-button {
+    background: transparent;
+    border: 2px solid #4f46e5;
+    color: #4f46e5;
+    position: relative;
+    overflow: hidden;
+    transform-style: preserve-3d;
+    transform: translateZ(0);
+    transition: all 0.4s ease;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-weight: bold;
+    cursor: pointer;
+    text-align: center;
+    display: inline-block;
+    text-decoration: none;
+}
+
+.back-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(79, 70, 229, 0.1), transparent);
+    transition: left 0.5s;
+}
+
+.back-button:hover {
+    background: linear-gradient(135deg, #8a9a5b 0%, #6b8e23 100%);
+    color: white;
+    transform: translateY(-2px) translateZ(8px);
+    box-shadow: 0 6px 15px rgba(79, 70, 229, 0.25);
+    border-color: #6366f1;
+}
+
+.back-button:hover::before {
+    left: 100%;
+}
+
+/* 🌟 Effetti 3D per tutti i bottoni delle card */
+.card-button {
+    position: relative;
+    overflow: hidden;
+    transform-style: preserve-3d;
+    transform: translateZ(0);
+    transition: all 0.4s ease;
+    border: 2px solid transparent;
+    background: linear-gradient(135deg, #8a9a5b 0%, #6b8e23 100%);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    text-align: center;
+    display: inline-block;
+    text-decoration: none;
+}
+
+.card-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.card-button:hover {
+    background: linear-gradient(135deg, #6b8e23 0%, #8a9a5b 100%);
+    transform: translateY(-3px) translateZ(10px);
+    box-shadow: 0 8px 20px rgba(107, 142, 35, 0.3);
+    border-color: #aab586;
+}
+
+.card-button:hover::before {
+    left: 100%;
+}
+
+/* 🌟 Effetto di profondità aggiuntivo per le card */
+.dashboard-card {
+    position: relative;
+    transform-style: preserve-3d;
+    perspective: 1000px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 15px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dashboard-card::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 5%;
+    width: 90%;
+    height: 20px;
+    background: rgba(107, 142, 35, 0.1);
+    border-radius: 50%;
+    filter: blur(8px);
+    transform: translateZ(-10px);
+    transition: all 0.4s ease;
+}
+
+.dashboard-card:hover::after {
+    bottom: -12px;
+    filter: blur(12px);
+    background: rgba(107, 142, 35, 0.15);
+}
+
+
