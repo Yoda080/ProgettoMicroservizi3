@@ -8,7 +8,7 @@ using RentalService.Data;
 
 #nullable disable
 
-namespace RentalService.Migrations
+namespace Rentals.Migrations
 {
     [DbContext(typeof(RentalDbContext))]
     partial class RentalDbContextModelSnapshot : ModelSnapshot
@@ -17,7 +17,7 @@ namespace RentalService.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.9")
+                .HasAnnotation("ProductVersion", "8.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -26,7 +26,8 @@ namespace RentalService.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("id");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
@@ -46,19 +47,25 @@ namespace RentalService.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("returned_at");
 
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("status");
+
                     b.Property<decimal>("TotalPrice")
-                        .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)")
                         .HasColumnName("total_price");
 
                     b.Property<string>("UserId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
                         .HasColumnName("user_id");
 
                     b.HasKey("Id");
 
-                    b.ToTable("rentals", "dbo");
+                    b.ToTable("rentals_db", "dbo");
                 });
 #pragma warning restore 612, 618
         }

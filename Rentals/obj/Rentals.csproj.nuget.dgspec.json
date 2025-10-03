@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\ZALTERLAND\\Desktop\\ProgettoMicroservizi-main\\Rentals\\Rentals.csproj": {}
+    "C:\\Users\\ZALTERLAND\\Desktop\\propgetto finale\\ProgettoMicroservizi3\\Rentals\\Rentals.csproj": {}
   },
   "projects": {
-    "C:\\Users\\ZALTERLAND\\Desktop\\ProgettoMicroservizi-main\\Rentals\\Rentals.csproj": {
+    "C:\\Users\\ZALTERLAND\\Desktop\\propgetto finale\\ProgettoMicroservizi3\\Rentals\\Rentals.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\ZALTERLAND\\Desktop\\ProgettoMicroservizi-main\\Rentals\\Rentals.csproj",
+        "projectUniqueName": "C:\\Users\\ZALTERLAND\\Desktop\\propgetto finale\\ProgettoMicroservizi3\\Rentals\\Rentals.csproj",
         "projectName": "Rentals",
-        "projectPath": "C:\\Users\\ZALTERLAND\\Desktop\\ProgettoMicroservizi-main\\Rentals\\Rentals.csproj",
+        "projectPath": "C:\\Users\\ZALTERLAND\\Desktop\\propgetto finale\\ProgettoMicroservizi3\\Rentals\\Rentals.csproj",
         "packagesPath": "C:\\Users\\ZALTERLAND\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\ZALTERLAND\\Desktop\\ProgettoMicroservizi-main\\Rentals\\obj\\",
+        "outputPath": "C:\\Users\\ZALTERLAND\\Desktop\\propgetto finale\\ProgettoMicroservizi3\\Rentals\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\ZALTERLAND\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -52,11 +52,11 @@
               "target": "Package",
               "version": "[8.0.0, )"
             },
-            "Microsoft.AspNetCore.Cors": {
-              "target": "Package",
-              "version": "[2.2.0, )"
-            },
             "Microsoft.AspNetCore.OpenApi": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            },
+            "Microsoft.EntityFrameworkCore": {
               "target": "Package",
               "version": "[8.0.0, )"
             },

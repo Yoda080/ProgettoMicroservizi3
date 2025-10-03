@@ -1,40 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, ArrowLeft, Trash2, CheckCircle, Film, DollarSign, Loader, AlertTriangle } from 'lucide-react';
+import { ShoppingCart, ArrowLeft, Trash2, CheckCircle, Film, DollarSign, Loader, AlertTriangle, Wallet } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useWallet } from './useWallet';
 
-// Mock per la navigazione (come in Rental.jsx)
-const useNavigate = () => {
-    // Funzione di simulazione che logga la navigazione
-    const navigate = (newPath) => { console.log(`Simulazione navigazione a: ${newPath}`); };
-    return navigate;
-};
+const RENTAL_CHECKOUT_API_URL = 'http://localhost:5003/api/rentals/checkout';
 
-// Componente Cart
 const Cart = () => {
-    const navigate = useNavigate();
-    const CART_STORAGE_KEY = 'movieCart';
+    const navigate = useNavigate(); 
+    const { 
+        balance, 
+        isLoading: isWalletLoading, 
+        walletError, 
+        debitWallet,
+        fetchBalance 
+    } = useWallet(); 
     
+    const CART_STORAGE_KEY = 'movieCart';
     const [cartItems, setCartItems] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isProcessing, setIsProcessing] = useState(false);
     const [message, setMessage] = useState('');
     const [messageType, setMessageType] = useState('info');
 
-    // Funzione per aggiornare il carrello in React e in localStorage
-    const updateCartInStorage = (newCart, successText = '') => {
-        try {
-            localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(newCart));
-            setCartItems(newCart);
-            if (successText) {
-                setMessage(successText);
-                setMessageType('info');
-            }
-        } catch (e) {
-            console.error("Errore nel salvataggio del carrello in localStorage:", e);
-            setMessage("Errore critico: impossibile salvare lo stato del carrello in locale.");
-            setMessageType('error');
-        }
+    // Funzione per mostrare messaggi
+    const displayMessage = (text, type) => {
+        setMessage(text);
+        setMessageType(type);
+        setTimeout(() => setMessage(''), 5000);
     };
 
-    // Funzione per caricare il carrello all'avvio
+    // Carica il carrello dal localStorage
     useEffect(() => {
         const loadCart = () => {
             try {
@@ -42,16 +37,13 @@ const Cart = () => {
                 if (storedCart) {
                     setCartItems(JSON.parse(storedCart));
                 }
-            } catch (e) {
-                console.error("Errore nel caricamento del carrello da localStorage:", e);
-                setMessage("Errore nel caricamento iniziale del carrello.");
-                setMessageType('error');
-                setCartItems([]);
+            } catch (error) {
+                console.error("Errore nel caricamento del carrello:", error);
+                displayMessage("Errore nel caricamento del carrello", 'error');
             } finally {
                 setLoading(false);
             }
         };
-        
         loadCart();
     }, []);
 
@@ -61,165 +53,213 @@ const Cart = () => {
         if (!itemToRemove) return;
 
         const newCart = cartItems.filter(item => item.id !== movieId);
-        updateCartInStorage(newCart, `Film "${itemToRemove.title}" rimosso dal carrello.`);
+        setCartItems(newCart);
+        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(newCart));
+        displayMessage(`"${itemToRemove.title}" rimosso dal carrello`, 'info');
     };
 
-    // Simula il checkout (noleggio multiplo)
-    const handleCheckout = () => {
-        if (cartItems.length === 0) {
-            setMessage("Il carrello è vuoto! Aggiungi dei film prima di procedere.");
-            setMessageType('error');
+    // Calcola il prezzo del film
+    const getMoviePrice = (movie) => movie.price || 3.99;
+
+    // Calcola il totale
+    const totalCost = cartItems.reduce((sum, item) => sum + getMoviePrice(item), 0).toFixed(2);
+    const totalCostNum = parseFloat(totalCost);
+    
+    // Verifica condizioni per il checkout
+    const isSufficientFunds = balance !== null && totalCostNum <= balance;
+    const canCheckout = cartItems.length > 0 && isSufficientFunds && !isProcessing && !isWalletLoading;
+
+    // Gestisce il checkout completo
+    const handleCheckout = async () => {
+        if (!canCheckout) {
+            if (cartItems.length === 0) {
+                displayMessage("Il carrello è vuoto!", 'error');
+            } else if (!isSufficientFunds) {
+                displayMessage("Fondi insufficienti nel portafoglio!", 'error');
+            }
             return;
         }
 
-        // In una vera applicazione, qui faresti una singola API POST /api/rentals/checkout 
-        // inviando l'array di IDs dei film.
+        const authToken = localStorage.getItem('authToken');
+        if (!authToken) {
+            displayMessage("Errore di autenticazione. Effettua il login.", 'error');
+            navigate('/login');
+            return;
+        }
+
+        setIsProcessing(true);
+        setMessage('');
         
-        console.log("Simulazione checkout per i seguenti film:", cartItems.map(i => i.title));
-        
-        // Svuota il carrello dopo il checkout simulato
-        updateCartInStorage([], ""); // Non mostro il messaggio di successo qui, lo mostro dopo
-        
-        setMessage("🎉 Checkout completato con successo! I film sono stati noleggiati.");
-        setMessageType('success');
+        // Converti gli ID in numeri
+        const movieIds = cartItems.map(item => parseInt(item.id));
+
+        try {
+            displayMessage("Registrazione noleggio...", 'info');
+            
+            // Payload corretto per il backend
+            const rentalPayload = {
+                Items: movieIds,
+                TotalAmount: totalCostNum
+            };
+
+            console.log("Payload inviato:", rentalPayload);
+
+            const rentalResponse = await fetch(RENTAL_CHECKOUT_API_URL, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${authToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(rentalPayload)
+            });
+
+            if (!rentalResponse.ok) {
+                const errorText = await rentalResponse.text();
+                let errorDetails = `Status: ${rentalResponse.status}`;
+                try {
+                    const errorBody = JSON.parse(errorText);
+                    errorDetails = errorBody.message || errorDetails;
+                } catch {}
+                throw new Error(`Errore servizio noleggi: ${errorDetails}`);
+            }
+
+            const rentalResult = await rentalResponse.json();
+            console.log("Noleggio registrato:", rentalResult);
+
+            // FASE 2: Pagamento con il wallet
+            displayMessage("Elaborazione pagamento...", 'info');
+            
+            const newBalance = await debitWallet(totalCostNum);
+            
+            // FASE 3: Successo - Svuota carrello
+            setCartItems([]);
+            localStorage.removeItem(CART_STORAGE_KEY);
+            
+            displayMessage(
+                `✅ Acquisto completato! Nuovo saldo: € ${newBalance.toFixed(2)}`, 
+                'success'
+            );
+
+            setTimeout(() => {
+                navigate('/rentals');
+            }, 3000);
+
+        } catch (error) {
+            console.error("Errore durante il checkout:", error);
+            
+            if (error.message.includes("UNAUTHORIZED")) {
+                displayMessage("Sessione scaduta. Effettua nuovamente il login.", 'error');
+                navigate('/login');
+            } else {
+                displayMessage(`Checkout fallito: ${error.message}`, 'error');
+            }
+            
+            // Ricarica il saldo in caso di errore
+            fetchBalance();
+        } finally {
+            setIsProcessing(false);
+        }
     };
-    
-    // Calcola il costo totale simulato (assumendo un prezzo fisso se non specificato nell'oggetto film)
-    const getMoviePrice = (movie) => movie.price || 3.99; 
-    const totalCost = cartItems.reduce((sum, item) => sum + getMoviePrice(item), 0).toFixed(2);
-    
-    // Componente per mostrare un messaggio di stato
-    const MessageDisplay = ({ type, text }) => {
-        if (!text) return null;
+
+    // Componente per i messaggi
+    const MessageDisplay = () => {
+        if (!message && !walletError) return null;
+        
+        const currentMessage = walletError || message;
+        const currentType = walletError ? 'error' : messageType;
+        
         const colors = {
             error: 'bg-red-100 border-red-500 text-red-700',
             success: 'bg-green-100 border-green-500 text-green-700',
             info: 'bg-blue-100 border-blue-500 text-blue-700',
         };
-        const Icon = type === 'error' ? AlertTriangle : (type === 'success' ? CheckCircle : ShoppingCart);
-
+        
+        const Icon = currentType === 'error' ? AlertTriangle : 
+                    currentType === 'success' ? CheckCircle : 
+                    (isProcessing ? Loader : ShoppingCart);
+        
         return (
-            <div className={`p-4 mb-6 rounded-xl border-l-4 ${colors[type]} shadow-lg flex items-center transition duration-300`}>
-                <Icon className="w-5 h-5 mr-3 flex-shrink-0" />
-                <p className="font-medium">{text}</p>
+            <div className={`p-4 mb-6 rounded-xl border-l-4 ${colors[currentType]} shadow-lg flex items-center transition duration-300`}>
+                <Icon className={`w-5 h-5 mr-3 flex-shrink-0 ${isProcessing && currentType === 'info' ? 'animate-spin' : ''}`} />
+                <p className="font-medium">{currentMessage}</p>
             </div>
         );
     };
 
-    // Stili CSS (per coerenza con Rental.jsx)
-    const cssStyles = `
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
-        .cart-container { 
-            font-family: 'Inter', sans-serif; 
-            min-height: 100vh;
-            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); /* Sfondo più chiaro/verde */
-            padding: 2rem;
-            color: #333;
-        }
-        .cart-header { 
-            background: linear-gradient(135deg, #66bb6a 0%, #43a047 100%); 
-            box-shadow: 0 6px 15px rgba(67, 160, 71, 0.3);
-            color: white;
-            border-radius: 1rem;
-        }
-        .cart-card {
-            background: white;
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        .checkout-button {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%); /* Smeraldo */
-            transition: all 0.3s ease;
-        }
-        .checkout-button:hover:not(:disabled) {
-            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-            transform: scale(1.02);
-            box-shadow: 0 4px 10px rgba(5, 150, 105, 0.4);
-        }
-        .checkout-button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        .remove-button {
-            color: #ef4444; 
-            transition: color 0.2s, transform 0.2s;
-        }
-        .remove-button:hover {
-            color: #b91c1c;
-            transform: scale(1.1);
-        }
-        .back-button {
-            background: linear-gradient(135deg, #8a9a5b 0%, #6b8e23 100%);
-            transition: all 0.3s ease;
-        }
-        .back-button:hover {
-            transform: scale(1.05);
-        }
-        /* Responsività */
-        @media (min-width: 1024px) {
-            .h-fit { height: fit-content; }
-        }
-    `;
-
-
-    if (loading) {
+    // Schermata di caricamento
+    if (loading || isWalletLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <style>{cssStyles}</style>
                 <div className="text-center">
-                    <Loader className="w-12 h-12 animate-spin text-green-600 mb-4" />
-                    <p className="text-xl text-gray-700 font-semibold">Caricamento carrello...</p>
+                    <Loader className="w-12 h-12 animate-spin text-green-600 mb-4 mx-auto" />
+                    <p className="text-xl text-gray-700 font-semibold">
+                        {isWalletLoading ? "Caricamento portafoglio..." : "Caricamento carrello..."}
+                    </p>
                 </div>
             </div>
         );
     }
-    
-    return (
-        <div className="cart-container p-4 sm:p-8">
-            <style>{cssStyles}</style>
-            
-            <div className="max-w-4xl mx-auto">
-                <header className="cart-header flex flex-col sm:flex-row justify-between items-center py-6 mb-8 p-6">
-                    <h1 className="text-3xl sm:text-4xl font-extrabold flex items-center mb-4 sm:mb-0">
-                        <ShoppingCart className="w-8 h-8 sm:w-9 sm:h-9 mr-4 text-white" />
-                        Il Tuo Carrello
-                    </h1>
-                    <button
-                        onClick={() => navigate('/rentals')}
-                        className="back-button text-white font-semibold py-2 px-4 rounded-full shadow-lg flex items-center text-sm sm:text-base"
-                    >
-                        <ArrowLeft className="w-5 h-5 mr-2" />
-                        Torna ai Noleggi
-                    </button>
-                </header>
 
-                <MessageDisplay type={messageType} text={message} />
-                
-                {cartItems.length === 0 && messageType !== 'success' ? (
-                    <div className="cart-card p-10 rounded-xl text-center border-2 border-dashed border-gray-300 bg-gray-50">
-                        <ShoppingCart className="w-10 h-10 mx-auto mb-4 text-gray-400" />
-                        <p className="text-xl text-gray-600 font-medium">Il carrello è vuoto.</p>
-                        <p className="text-gray-500 mt-2">Aggiungi film dalla sezione "Gestione Noleggi"!</p>
+    return (
+        <div className="min-h-screen bg-gray-50 p-4 sm:p-8">
+            <div className="max-w-6xl mx-auto">
+                {/* Header */}
+                <div className="bg-green-600 text-white rounded-xl p-6 mb-8 shadow-lg">
+                    <div className="flex flex-col sm:flex-row justify-between items-center">
+                        <h1 className="text-3xl sm:text-4xl font-bold flex items-center mb-4 sm:mb-0">
+                            <ShoppingCart className="w-8 h-8 sm:w-10 sm:h-10 mr-4" />
+                            Il Tuo Carrello
+                        </h1>
+                        <button
+                            onClick={() => navigate('/rentals')}
+                            className="bg-green-700 hover:bg-green-800 text-white font-semibold py-3 px-6 rounded-lg flex items-center transition-colors shadow-md"
+                        >
+                            <ArrowLeft className="w-5 h-5 mr-2" />
+                            Torna ai Noleggi
+                        </button>
+                    </div>
+                </div>
+
+                <MessageDisplay />
+
+                {/* Contenuto principale */}
+                {cartItems.length === 0 ? (
+                    <div className="bg-white rounded-xl shadow-sm p-12 text-center border-2 border-dashed border-gray-300">
+                        <ShoppingCart className="w-20 h-20 text-gray-400 mx-auto mb-6" />
+                        <h2 className="text-2xl font-semibold text-gray-600 mb-3">Il carrello è vuoto</h2>
+                        <p className="text-gray-500 mb-6">Aggiungi alcuni film dalla sezione noleggi!</p>
+                        <button
+                            onClick={() => navigate('/rentals')}
+                            className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors shadow-md"
+                        >
+                            Esplora Film
+                        </button>
                     </div>
                 ) : (
-                    <div className="flex flex-col lg:flex-row gap-8">
-                        
-                        {/* Lista Articoli Carrello */}
-                        <div className="lg:w-2/3 space-y-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {/* Lista film nel carrello */}
+                        <div className="lg:col-span-2 space-y-4">
                             {cartItems.map(item => (
-                                <div key={item.id} className="cart-card p-4 rounded-xl flex justify-between items-center transition duration-300 hover:shadow-md border border-gray-100">
+                                <div key={item.id} className="bg-white rounded-xl shadow-sm p-6 flex justify-between items-center border border-gray-200 hover:shadow-md transition-shadow">
                                     <div className="flex items-center">
-                                        <Film className="w-6 h-6 mr-4 text-green-600 flex-shrink-0" />
+                                        <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+                                            <Film className="w-6 h-6 text-green-600" />
+                                        </div>
                                         <div>
-                                            <p className="font-semibold text-gray-900">{item.title}</p>
-                                            <p className="text-sm text-gray-500">Durata: {item.duration || 'N/A'} min</p>
+                                            <h3 className="font-semibold text-gray-900 text-lg">{item.title}</h3>
+                                            <p className="text-sm text-gray-500">
+                                                {item.duration ? `${item.duration} min` : 'Durata non disponibile'}
+                                            </p>
                                         </div>
                                     </div>
-                                    <div className="flex flex-col items-end sm:flex-row sm:items-center gap-2 sm:gap-4">
-                                        <span className="font-bold text-lg text-green-700">€ {getMoviePrice(item).toFixed(2)}</span>
+                                    <div className="flex items-center gap-4">
+                                        <span className="font-bold text-green-700 text-lg">
+                                            € {getMoviePrice(item).toFixed(2)}
+                                        </span>
                                         <button
                                             onClick={() => handleRemoveItem(item.id)}
-                                            className="remove-button p-2 rounded-full hover:bg-red-50"
+                                            className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-50 transition-colors"
+                                            disabled={isProcessing}
                                             title="Rimuovi dal carrello"
                                         >
                                             <Trash2 className="w-5 h-5" />
@@ -229,36 +269,61 @@ const Cart = () => {
                             ))}
                         </div>
 
-                        {/* Riepilogo e Checkout */}
-                        <div className="lg:w-1/3 cart-card p-6 rounded-xl lg:sticky lg:top-8 h-fit border-t-4 border-green-500">
-                            <h2 className="text-2xl font-bold mb-4 text-gray-800 border-b pb-2">Riepilogo Ordine</h2>
-                            
-                            <div className="space-y-3 mb-6">
-                                <div className="flex justify-between text-gray-600">
-                                    <span>Articoli:</span>
-                                    <span className="font-medium">{cartItems.length}</span>
+                        {/* Riepilogo ordine e checkout */}
+                        <div className="lg:col-span-1">
+                            <div className="bg-white rounded-xl shadow-sm p-6 border-t-4 border-green-500 sticky top-6">
+                                <h2 className="text-2xl font-bold mb-6 text-gray-800 border-b pb-3">Riepilogo Ordine</h2>
+                                
+                                {/* Saldo wallet */}
+                                <div className={`flex justify-between items-center text-lg font-semibold p-4 mb-6 rounded-lg ${
+                                    isSufficientFunds ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
+                                }`}>
+                                    <span className="flex items-center">
+                                        <Wallet className="w-5 h-5 mr-2" />
+                                        Saldo:
+                                    </span>
+                                    <span>€ {balance !== null ? balance.toFixed(2) : '0.00'}</span>
                                 </div>
-                                <div className="flex justify-between text-gray-600">
-                                    <span>Costo Noleggio (Simulato):</span>
-                                    <span className="font-medium">€ {totalCost}</span>
-                                </div>
-                                <div className="flex justify-between font-bold text-xl pt-2 border-t border-gray-200 text-gray-900">
-                                    <span>Totale (Simulato):</span>
-                                    <span>€ {totalCost}</span>
-                                </div>
-                            </div>
 
-                            <button
-                                onClick={handleCheckout}
-                                disabled={cartItems.length === 0}
-                                className="checkout-button w-full text-white font-bold py-3 rounded-lg flex items-center justify-center shadow-lg disabled:opacity-50"
-                            >
-                                <DollarSign className="w-5 h-5 mr-2" />
-                                Procedi al Noleggio ({cartItems.length})
-                            </button>
-                            <p className="text-xs text-gray-500 mt-3 text-center italic">
-                                *Questa è una simulazione di noleggio multiplo.
-                            </p>
+                                <div className="space-y-4 mb-6">
+                                    <div className="flex justify-between text-gray-600">
+                                        <span>Film nel carrello:</span>
+                                        <span className="font-medium">{cartItems.length}</span>
+                                    </div>
+                                    <div className="flex justify-between text-lg font-semibold pt-4 border-t border-gray-200">
+                                        <span>Totale:</span>
+                                        <span className="text-green-700 text-xl">€ {totalCost}</span>
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={handleCheckout}
+                                    disabled={!canCheckout}
+                                    className={`w-full text-white font-bold py-4 rounded-xl flex items-center justify-center shadow-lg transition-all ${
+                                        canCheckout 
+                                            ? 'bg-green-600 hover:bg-green-700 hover:shadow-xl transform hover:scale-105' 
+                                            : 'bg-gray-400 cursor-not-allowed'
+                                    }`}
+                                >
+                                    {isProcessing ? (
+                                        <>
+                                            <Loader className="w-5 h-5 mr-3 animate-spin" />
+                                            Processing...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <DollarSign className="w-5 h-5 mr-2" />
+                                            Checkout (€ {totalCost})
+                                        </>
+                                    )}
+                                </button>
+
+                                {!isSufficientFunds && balance !== null && (
+                                    <p className="text-red-600 text-sm mt-3 text-center font-medium">
+                                        ❌ Fondi insufficienti per completare l'acquisto
+                                    </p>
+                                )}
+                            </div>
                         </div>
                     </div>
                 )}

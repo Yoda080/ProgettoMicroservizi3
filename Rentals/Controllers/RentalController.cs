@@ -1,13 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using RentalService.Data;
-using RentalService.Models;
-using RentalService.Services;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
-using System;
-using System.Security.Authentication;
+using RentalService.Services;
 
 namespace RentalService.Controllers
 {
@@ -16,136 +9,91 @@ namespace RentalService.Controllers
     [Authorize]
     public class RentalsController : ControllerBase
     {
-        private readonly RentalDbContext _context;
-        private readonly IHttpClientService _httpClientService;
+        private readonly IRentalService _rentalService;
+        private readonly ILogger<RentalsController> _logger;
 
-        public RentalsController(RentalDbContext context, IHttpClientService httpClientService)
+        public RentalsController(IRentalService rentalService, ILogger<RentalsController> logger)
         {
-            _context = context;
-            _httpClientService = httpClientService;
+            _rentalService = rentalService;
+            _logger = logger;
         }
 
-        /// <summary>
-        /// Helper method to get the user ID from the JWT token claims.
-        /// </summary>
-        private string GetUserIdFromToken()
+       [HttpPost("checkout")]
+public async Task<ActionResult> Checkout([FromBody] CheckoutRequest request)
+{
+    try
+    {
+        _logger.LogInformation("📥 Ricevuta richiesta checkout");
+
+        if (request == null)
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null)
-            {
-                throw new AuthenticationException("User ID not found in token.");
-            }
-            return userIdClaim.Value;
+            return BadRequest(new { message = "Request body is required" });
         }
 
-        [HttpPost]
-        public async Task<IActionResult> RentMovie([FromBody] RentalRequest request)
+        if (request.Items == null || !request.Items.Any())
         {
-            try
-            {
-                // ✅ Ottieni l'ID utente dal token come stringa
-                var userId = GetUserIdFromToken();
-
-                var movieExists = await _httpClientService.ExistsAsync("MovieService", $"api/movies/exists/{request.MovieId}");
-                if (!movieExists)
-                {
-                    return NotFound($"Movie with ID {request.MovieId} not found");
-                }
-
-                decimal moviePrice;
-                try
-                {
-                    moviePrice = await _httpClientService.GetAsync<decimal>("MovieService", $"api/movies/{request.MovieId}/price");
-                }
-                catch
-                {
-                    moviePrice = 4.99m;
-                }
-
-                // ✅ Usa l'ID utente come stringa nel noleggio
-                var rental = new Rental
-                {
-                    UserId = userId, // Ora è una stringa
-                    MovieId = request.MovieId,
-                    RentedAt = DateTime.UtcNow,
-                    DueDate = DateTime.UtcNow.AddDays(7),
-                    TotalPrice = moviePrice,
-                    ReturnedAt = null
-                };
-
-                _context.Rentals.Add(rental);
-                await _context.SaveChangesAsync();
-
-                return Ok(new
-                {
-                    message = "Movie rented successfully",
-                    rentalId = rental.Id,
-                    totalPrice = moviePrice
-                });
-            }
-            catch (AuthenticationException ex)
-            {
-                return Unauthorized(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
+            return BadRequest(new { message = "Items are required" });
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetUserRentals()
+        if (request.TotalAmount <= 0)
         {
-            try
-            {
-                // ✅ Filtra i noleggi in base all'ID dell'utente autenticato come stringa
-                var userId = GetUserIdFromToken();
-
-                var rentals = await _context.Rentals
-                                            .Where(r => r.UserId == userId)
-                                            .ToListAsync();
-                return Ok(rentals);
-            }
-            catch (AuthenticationException ex)
-            {
-                return Unauthorized(ex.Message);
-            }
+            return BadRequest(new { message = "TotalAmount must be greater than 0" });
         }
 
-        [HttpPost("return/{id}")]
-        public async Task<IActionResult> ReturnMovie(int id)
+        // 🟢 CORREZIONE: Estrai l'User ID in modo più robusto
+        var userId = User.FindFirst("userId")?.Value 
+                  ?? User.FindFirst("sub")?.Value 
+                  ?? User.FindFirst("nameid")?.Value
+                  ?? User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value
+                  ?? User.Identity?.Name;
+
+        _logger.LogInformation($"🔍 User claims: {string.Join(", ", User.Claims.Select(c => $"{c.Type}: {c.Value}"))}");
+
+        if (string.IsNullOrEmpty(userId))
         {
-            try
+            _logger.LogWarning("❌ User ID non trovato nel token. Claims disponibili:");
+            foreach (var claim in User.Claims)
             {
-                // ✅ Verifica che l'utente stia cercando di restituire un proprio film
-                var userId = GetUserIdFromToken();
-
-                var rental = await _context.Rentals
-                                           .FirstOrDefaultAsync(r => r.Id == id && r.UserId == userId);
-
-                if (rental == null)
-                {
-                    return NotFound("Rental not found or does not belong to the current user.");
-                }
-
-                if (rental.ReturnedAt != null)
-                {
-                    return BadRequest("Movie has already been returned.");
-                }
-
-                rental.ReturnedAt = DateTime.UtcNow;
-                await _context.SaveChangesAsync();
-                return Ok("Movie returned successfully.");
+                _logger.LogWarning($"  {claim.Type}: {claim.Value}");
             }
-            catch (AuthenticationException ex)
-            {
-                return Unauthorized(ex.Message);
-            }
+            return Unauthorized(new { message = "User ID not found in token" });
+        }
+
+        _logger.LogInformation("🎯 Creazione noleggio per user {UserId} con {ItemCount} items", userId, request.Items.Count);
+
+        var success = await _rentalService.CreateRentalAsync(userId, request.Items, request.TotalAmount);
+
+        if (!success)
+        {
+            return BadRequest(new { message = "Failed to create rental" });
+        }
+
+        return Ok(new { 
+            success = true,
+            message = "Rental created successfully"
+        });
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "❌ Errore durante il checkout");
+        return StatusCode(500, new { 
+            success = false,
+            message = "Internal server error"
+        });
+    }
+}
+
+        [HttpGet("test")]
+        [AllowAnonymous]
+        public IActionResult Test()
+        {
+            return Ok(new { message = "Rental service is working!" });
         }
     }
 
-    public class RentalRequest
+    public class CheckoutRequest
     {
-        public int MovieId { get; set; }
+        public List<int> Items { get; set; } = new List<int>();
+        public decimal TotalAmount { get; set; }
     }
 }

@@ -13,13 +13,15 @@ services:
       SA_PASSWORD: LaTuaPasswordComplessa123!
     ports:
       - "1433:1433"
-    
+    volumes:
+        # 🟢 AGGIUNGI: Volume per persistenza dati
+      - ./db_init.sql:/docker-entrypoint-initdb.d/init.sql  # 🟢 AGGIUNGI: Script inizializzazione
     healthcheck:
       test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "LaTuaPasswordComplessa123!", "-Q", "SELECT 1"]
       interval: 10s
       timeout: 10s
       retries: 10
-      start_period: 30s 
+      start_period: 30s
 
   # ----------------------------------------
   # 2. MICROSERVIZIO USER (.NET) - Porta 5001
