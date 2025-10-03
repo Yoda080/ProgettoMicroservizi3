@@ -1,322 +1,306 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import './Rental.css';
+import { Film, ShoppingCart, LogOut, Home, ArrowRight, Loader, AlertTriangle } from 'lucide-react';
+// Importa il vero hook di navigazione per far funzionare i pulsanti
+import { useNavigate } from 'react-router-dom'; 
+
+// 🛑 URL REALE DEL MICROSERVIZIO MOVIECATALOG
+const MOVIE_CATALOG_API_URL = 'http://localhost:5002/api/movies'; 
 
 const Rental = () => {
-    const [rentals, setRentals] = useState([]);
+    const navigate = useNavigate(); 
+    const CART_STORAGE_KEY = 'movieCart';
+    
+    const [films, setFilms] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [authError, setAuthError] = useState(false);
-    const navigate = useNavigate();
+    const [error, setError] = useState(null); 
+    const [cartCount, setCartCount] = useState(0);
 
-    const [movies, setMovies] = useState([]);
-    const [selectedMovieId, setSelectedMovieId] = useState('');
-    const [renting, setRenting] = useState(false);
-
-    const RENTALS_API_URL = "http://localhost:5003/api/Rentals";
-    const MOVIES_API_URL = "http://localhost:5002/api/movies";
-
-    const getToken = () => {
-        const token = localStorage.getItem('authToken');
-        return token;
-    };
-
-    const handleReturnMovie = async (rentalId) => {
-        try {
-            const token = getToken();
-            if (!token) {
-                setAuthError(true);
-                setError("Autenticazione necessaria.");
-                return;
-            }
-
-            const response = await fetch(`${RENTALS_API_URL}/return/${rentalId}`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (!response.ok) {
-                if (response.status === 401) {
-                    localStorage.removeItem('authToken');
-                    setAuthError(true);
-                    setError("Sessione scaduta. Effettua nuovamente il login.");
-                    return;
-                }
-                const errorData = await response.json();
-                throw new Error(errorData.message || `Errore HTTP: ${response.status}`);
-            }
-
-            setRentals(prevRentals =>
-                prevRentals.map(rental =>
-                    rental.id === rentalId ? { ...rental, returnedAt: new Date().toISOString() } : rental
-                )
-            );
-            alert("Film restituito con successo!");
-        } catch (err) {
-            setError(err.message);
-            console.error("Errore restituzione film:", err.message);
+    // Stili CSS (invariati, ma cruciali per l'estetica)
+    const cssStyles = `
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        .rental-container { 
+            font-family: 'Inter', sans-serif; 
+            min-height: 100vh;
+            background: #f0f4f8; 
+            color: #333;
         }
-    };
-
-    const fetchRentals = async (token) => {
-        try {
-            const rentalsResponse = await fetch(RENTALS_API_URL, {
-                method: 'GET',
-                headers: { 'Authorization': `Bearer ${token}` },
-            });
-
-            if (!rentalsResponse.ok) {
-                if (rentalsResponse.status === 401) {
-                    throw new Error('Token non valido o scaduto');
-                }
-                throw new Error(`Errore HTTP: ${rentalsResponse.status}`);
-            }
-
-            const rentalsData = await rentalsResponse.json();
-            setRentals(rentalsData);
-        } catch (err) {
-            console.error('Errore in fetchRentals:', err);
-            throw err;
+        .rental-header { 
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%); 
+            color: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
-    };
-
-    const fetchMovies = async () => {
-        try {
-            const moviesResponse = await fetch(MOVIES_API_URL);
-
-            if (!moviesResponse.ok) {
-                throw new Error(`Errore HTTP: ${moviesResponse.status}`);
-            }
-
-            const moviesData = await moviesResponse.json();
-            setMovies(moviesData);
-        } catch (err) {
-            console.error("Errore fetch movies:", err);
-            setError("Impossibile caricare i film disponibili");
+        .card {
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-    };
-
-    const handleLoginRedirect = () => {
-        navigate('/login');
-    };
-
-    const handleRentMovie = async (e) => {
-        e.preventDefault();
-        setRenting(true);
-        setError(null);
-
-        if (!selectedMovieId) {
-            setError("Seleziona un film.");
-            setRenting(false);
-            return;
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
         }
-
-        try {
-            const token = getToken();
-            if (!token) {
-                setAuthError(true);
-                setError("Token non trovato. Effettua il login.");
-                setRenting(false);
-                return;
-            }
-
-            const response = await fetch(RENTALS_API_URL, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ movieId: parseInt(selectedMovieId) })
-            });
-
-            if (!response.ok) {
-                if (response.status === 401) {
-                    localStorage.removeItem('authToken');
-                    setAuthError(true);
-                    setError("Sessione scaduta. Effettua nuovamente il login.");
-                    setRenting(false);
-                    return;
-                }
-                const errorData = await response.json();
-                throw new Error(errorData.message || `Errore HTTP: ${response.status}`);
-            }
-
-            const newToken = getToken();
-            if (newToken) {
-                await fetchRentals(newToken);
-            }
-            alert("Film noleggiato con successo!");
-            setSelectedMovieId('');
-        } catch (err) {
-            setError(err.message);
-            console.error("Errore noleggio film:", err.message);
-        } finally {
-            setRenting(false);
+        .add-to-cart-button {
+            background-color: #3b82f6; 
+            transition: background-color 0.2s;
         }
-    };
+        .add-to-cart-button:hover {
+            background-color: #2563eb;
+        }
+        .cart-button {
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .cart-button:hover {
+            background-color: #374151;
+            transform: scale(1.05);
+        }
+        .cart-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #ef4444; 
+            color: white;
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            border-radius: 9999px;
+            min-width: 20px;
+            text-align: center;
+        }
+    `;
 
+    // 1. Logica di caricamento Film dal Microservizio Reale
     useEffect(() => {
-        const fetchData = async () => {
+        const loadFilms = async () => {
+            setLoading(true);
+            setError(null);
+            
+            // Recupera il token di autenticazione da localStorage
+            const authToken = localStorage.getItem('authToken');
+            
+            if (!authToken) {
+                setError("Non autorizzato. Token di accesso mancante.");
+                setLoading(false);
+                // Potresti voler reindirizzare l'utente al login qui
+                // navigate('/login'); 
+                return;
+            }
+
             try {
-                setLoading(true);
-                setError(null);
-                setAuthError(false);
+                // CHIAMATA FETCH AL MICROSERVIZIO REALE
+                const response = await fetch(MOVIE_CATALOG_API_URL, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
 
-                const token = getToken();
-
-                if (!token) {
-                    setAuthError(true);
-                    setError("Token non trovato nel localStorage. Effettua il login.");
-                    setLoading(false);
-                    return;
+                if (!response.ok) {
+                    // Gestione di errori HTTP (400, 401, 404, 500 ecc.)
+                    const errorText = await response.text();
+                    if (response.status === 401) {
+                         // Token scaduto o non valido
+                        setError("Sessione scaduta o non valida. Effettua nuovamente il login.");
+                        localStorage.removeItem('authToken');
+                        navigate('/login');
+                        return;
+                    }
+                    throw new Error(`Errore HTTP: ${response.status} - ${response.statusText}. Dettagli: ${errorText.substring(0, 100)}...`);
                 }
+                
+                const fetchedFilms = await response.json();
+                
+                if (!Array.isArray(fetchedFilms)) {
+                    throw new Error("Il servizio ha restituito un formato dati inatteso (non un array).");
+                }
+                
+                // 🚀 NUOVA LOGICA: Forza la disponibilità a TRUE se il campo è mancante/errato.
+                // Questo è cruciale per aggirare problemi di formato API e rendere i film acquistabili.
+                const processedFilms = fetchedFilms.map(movie => ({
+                    ...movie,
+                    // Se movie.available non è un booleano (o è undefined/null), lo forziamo a true
+                    available: typeof movie.available === 'boolean' ? movie.available : true, 
+                    // Assicuriamoci che l'ID esista per la chiave React
+                    id: movie.id || movie.title, 
+                }));
 
-                await Promise.all([
-                    fetchMovies(),
-                    fetchRentals(token)
-                ]);
 
+                setFilms(processedFilms);
             } catch (err) {
-                setError("Errore nel caricamento dei dati: " + err.message);
+                console.error("Errore nel recupero dei film dal catalogo:", err.message);
+                // Gestione errori di rete o parsing
+                setError(`Errore di comunicazione: ${err.message}`);
+                setFilms([]); 
             } finally {
                 setLoading(false);
             }
         };
+        loadFilms();
+    }, [navigate]); // navigate è una dipendenza perché viene usata all'interno
 
-        fetchData();
-
-    }, []); // Array di dipendenze vuoto: la funzione viene eseguita solo al mount
+    // 2. Logica Carrello (Badge e aggiornamento)
+    const updateCartCount = () => {
+        try {
+            const storedCart = localStorage.getItem(CART_STORAGE_KEY);
+            const items = storedCart ? JSON.parse(storedCart) : [];
+            setCartCount(items.length);
+        } catch (e) {
+            console.error("Errore nel caricamento del carrello per il badge:", e);
+            setCartCount(0);
+        }
+    };
 
     useEffect(() => {
-        const handleStorageChange = (e) => {
-            if (e.key === 'authToken') {
-                if (e.newValue === null) {
-                    setAuthError(true);
-                    setError("Sessione scaduta. Effettua nuovamente il login.");
-                }
-            }
-        };
-
-        window.addEventListener('storage', handleStorageChange);
-
+        updateCartCount();
+        window.addEventListener('storage', updateCartCount);
         return () => {
-            window.removeEventListener('storage', handleStorageChange);
+            window.removeEventListener('storage', updateCartCount);
         };
     }, []);
 
-    if (loading) {
-        return <div className="rental-container">Caricamento noleggi...</div>;
-    }
+    // 3. Aggiunge un film al carrello
+    const handleAddToCart = (movie) => {
+        // La disponibilità è garantita TRUE dalla logica in useEffect se il microservizio è ambiguo.
+        if (!movie.available) {
+            console.warn(`Film "${movie.title}" non disponibile per l'aggiunta.`);
+            return;
+        }
+        
+        try {
+            const storedCart = localStorage.getItem(CART_STORAGE_KEY);
+            let cart = storedCart ? JSON.parse(storedCart) : [];
 
-    if (authError) {
+            const isAlreadyInCart = cart.some(item => item.id === movie.id);
+
+            if (!isAlreadyInCart) {
+                cart.push(movie); 
+                localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+                updateCartCount();
+                console.log(`Film "${movie.title}" aggiunto al carrello.`);
+            } else {
+                console.log(`Film "${movie.title}" è già nel carrello.`);
+            }
+        } catch (e) {
+            console.error("Errore nell'aggiunta del carrello in localStorage:", e);
+        }
+    };
+    
+    // 4. Funzione per navigare al carrello
+    const goToCart = () => {
+        navigate('/cart'); 
+    };
+
+    // Gestione dello stato di Caricamento
+    if (loading) {
         return (
-            <div className="rental-container">
-                <div className="auth-error">
-                    <h2>Accesso richiesto</h2>
-                    <p>{error}</p>
-                    <button onClick={handleLoginRedirect} className="login-button">
-                        Vai al Login
-                    </button>
-                    <button onClick={() => navigate('/dashboard')} className="back-button">
-                        Torna alla Dashboard
-                    </button>
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <style>{cssStyles}</style>
+                <div className="text-center p-6 bg-white rounded-xl shadow-lg">
+                    <Loader className="w-12 h-12 animate-spin text-blue-600 mb-4 mx-auto" />
+                    <p className="text-xl text-gray-700 font-semibold">Caricamento catalogo dal microservizio...</p>
+                    <p className="text-sm text-gray-500 mt-2">Tentativo di connessione a: {MOVIE_CATALOG_API_URL}</p>
+                </div>
+            </div>
+        );
+    }
+    
+    // Gestione dello stato di Errore
+    if (error) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-red-50">
+                <style>{cssStyles}</style>
+                <div className="text-center p-8 bg-white rounded-xl shadow-2xl border-l-4 border-red-500 max-w-lg mx-4">
+                    <h2 className="text-2xl font-bold text-red-700 mb-4 flex items-center justify-center">
+                        <AlertTriangle className="w-6 h-6 mr-2" />
+                        Errore di Caricamento
+                    </h2>
+                    <p className="text-gray-700 mb-4">Impossibile recuperare il catalogo film. Dettagli:</p>
+                    <p className="font-mono text-sm p-3 bg-red-100 rounded-md text-left text-red-800 break-words">{error}</p>
+                    <p className="text-xs text-gray-500 mt-4">Verifica che l'URL API sia corretto e che il servizio sia attivo e raggiungibile.</p>
                 </div>
             </div>
         );
     }
 
+
     return (
         <div className="rental-container">
-            <header className="rental-header">
-                <h1>I miei Noleggi</h1>
+            <style>{cssStyles}</style>
 
-                <button
-                    onClick={() => navigate('/dashboard')}
-                    className="back-button"
-                >
-                    Torna alla Dashboard
-                </button>
+            {/* Header e Barra di Navigazione */}
+            <header className="rental-header p-4 flex justify-between items-center sticky top-0 z-10">
+                <h1 className="text-2xl font-bold flex items-center">
+                    <Film className="w-6 h-6 mr-2 text-blue-300" />
+                    Gestione Noleggi
+                </h1>
+                <div className="flex space-x-4">
+                    
+                    {/* Pulsante Carrello */}
+                    <button 
+                        onClick={goToCart} 
+                        className="cart-button bg-gray-700 text-white p-2 rounded-full shadow-md flex items-center"
+                        title="Vai al Carrello"
+                    >
+                        <ShoppingCart className="w-5 h-5" />
+                        {cartCount > 0 && (
+                            <span className="cart-badge">{cartCount}</span>
+                        )}
+                    </button>
+
+                    {/* Altri Pulsanti di Navigazione */}
+                    <button 
+                        onClick={() => navigate('/dashboard')} 
+                        className="bg-gray-700 hover:bg-gray-600 text-white p-2 rounded-full shadow-md transition"
+                        title="Dashboard"
+                    >
+                        <Home className="w-5 h-5" />
+                    </button>
+                    <button 
+                        onClick={() => { localStorage.removeItem('authToken'); navigate('/login'); }} 
+                        className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-full shadow-md transition"
+                        title="Logout"
+                    >
+                        <LogOut className="w-5 h-5" />
+                    </button>
+                </div>
             </header>
 
-            {error && !authError && <div className="error-message">{error}</div>}
+            {/* Contenuto Principale */}
+            <main className="p-4 sm:p-8 max-w-6xl mx-auto">
+                <h2 className="text-3xl font-extrabold text-gray-800 mb-6">Catalogo Film Disponibili ({films.length} titoli)</h2>
 
-            <div className="rental-form">
-                <h2>Noleggia un nuovo film</h2>
-                <form onSubmit={handleRentMovie}>
-                    <div>
-                        <label htmlFor="movie-select">Scegli un film:</label>
-                        <select
-                            id="movie-select"
-                            value={selectedMovieId}
-                            onChange={(e) => setSelectedMovieId(e.target.value)}
-                            required
-                        >
-                            <option value="">-- Seleziona un film --</option>
-                            {movies.map(movie => (
-                                <option key={movie.id} value={movie.id}>
-                                    {movie.title}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    <button type="submit" disabled={renting}>
-                        {renting ? 'Noleggio in corso...' : 'Noleggia'}
-                    </button>
-                </form>
-            </div>
-
-            <div className="rental-content">
-                <h2>I tuoi film noleggiati</h2>
-                {rentals.length > 0 ? (
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Film</th>
-                                <th>Data Noleggio</th>
-                                <th>Data Scadenza</th>
-                                <th>Stato</th>
-                                <th>Prezzo Totale</th>
-                                <th>Azioni</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            {rentals.map((rental) => {
-                                const movie = movies.find(m => m.id === rental.movieId);
-                                return (
-                                    <tr key={rental.id}>
-                                        <td>{movie ? movie.title : `Film ID: ${rental.movieId}`}</td>
-                                        <td>{new Date(rental.rentedAt).toLocaleDateString()}</td>
-                                        <td>{new Date(rental.dueDate).toLocaleDateString()}</td>
-                                        <td>
-                                            {rental.returnedAt
-                                                ? 'Restituito il ' + new Date(rental.returnedAt).toLocaleDateString()
-                                                : 'Da restituire'
-                                            }
-                                        </td>
-                                        <td>€ {rental.totalPrice?.toFixed(2) || '0.00'}</td>
-                                        <td>
-                                            {!rental.returnedAt && (
-                                                <button
-                                                    onClick={() => handleReturnMovie(rental.id)}
-                                                    className="return-button"
-                                                >
-                                                    Restituisci
-                                                </button>
-                                            )}
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
-                ) : (
-                    <p>Non hai ancora noleggiato film.</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {films.map(movie => (
+                        // Usiamo l'ID o il titolo come fallback per la chiave
+                        <div key={movie.id || movie.title} className="card p-5 border border-gray-200 flex flex-col justify-between">
+                            <div>
+                                <h3 className="text-xl font-semibold text-gray-900 mb-2">{movie.title}</h3>
+                                {/* Assumiamo che il microservizio restituisca duration in minuti */}
+                                <p className="text-sm text-gray-500 mb-1">Durata: {movie.duration || 'N/A'} min</p> 
+                            </div>
+                            
+                            <div className="pt-4 border-t border-gray-100 flex justify-between items-center">
+                                <p className="text-lg font-bold text-green-600">€ {movie.price?.toFixed(2) || 'N/A'}</p> 
+                                
+                                {movie.available ? (
+                                    <button
+                                        onClick={() => handleAddToCart(movie)}
+                                        className="add-to-cart-button text-white font-medium py-2 px-4 rounded-full shadow-lg flex items-center text-sm hover:shadow-xl"
+                                    >
+                                        Aggiungi 
+                                        <ArrowRight className="w-4 h-4 ml-1" />
+                                    </button>
+                                ) : (
+                                    <span className="text-red-500 font-medium text-sm">Non disponibile</span>
+                                )}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+                
+                {films.length === 0 && !loading && !error && (
+                    <p className="text-center text-gray-500 mt-10">Nessun film trovato nel catalogo. Il microservizio ha restituito un elenco vuoto.</p>
                 )}
-            </div>
+            </main>
         </div>
     );
 };

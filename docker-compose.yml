@@ -1,3 +1,5 @@
+
+
 services:
   # ----------------------------------------
   # 1. SERVIZIO DATABASE MS SQL SERVER
@@ -11,8 +13,7 @@ services:
       SA_PASSWORD: LaTuaPasswordComplessa123!
     ports:
       - "1433:1433"
-   
-       
+    
     healthcheck:
       test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "LaTuaPasswordComplessa123!", "-Q", "SELECT 1"]
       interval: 10s
@@ -21,7 +22,7 @@ services:
       start_period: 30s 
 
   # ----------------------------------------
-  # 2. MICROSERVIZIO USER (.NET)
+  # 2. MICROSERVIZIO USER (.NET) - Porta 5001
   # ----------------------------------------
   users:
     build: 
@@ -32,7 +33,7 @@ services:
     ports:
       - "5001:5001"
     environment:
-      ConnectionStrings__DefaultConnection: "Server=mssql_db;Database=users_db;User Id=sa;Password=LaTuaPasswordComplessa123!;TrustServerCertificate=true;"
+      ConnectionStrings__DefaultConnection: "Server=mssql;Database=users_db;User Id=sa;Password=LaTuaPasswordComplessa123!;TrustServerCertificate=true;"
       ASPNETCORE_URLS: http://+:5001
       JwtSettings__SecretKey: "LaTuaChiaveSegretaSuperSicuraAlmeno32Caratteri"
       JwtSettings__Issuer: "UserService"
@@ -42,7 +43,7 @@ services:
         condition: service_healthy
 
   # ----------------------------------------
-  # 3. MICROSERVIZIO MOVIE CATALOG (.NET)
+  # 3. MICROSERVIZIO MOVIE CATALOG (.NET) - Porta 5002
   # ----------------------------------------
   moviecatalog:
     build: 
@@ -53,7 +54,7 @@ services:
     ports:
       - "5002:5002"
     environment:
-      ConnectionStrings__DefaultConnection: "Server=mssql_db;Database=movies_db;User Id=sa;Password=LaTuaPasswordComplessa123!;TrustServerCertificate=true;"
+      ConnectionStrings__DefaultConnection: "Server=mssql;Database=movies_db;User Id=sa;Password=LaTuaPasswordComplessa123!;TrustServerCertificate=true;"
       ASPNETCORE_URLS: http://+:5002
       Services__UserService: "http://users:5001"
       Services__RentalService: "http://rentals:5003"
@@ -67,7 +68,7 @@ services:
         condition: service_started
 
   # ----------------------------------------
-  # 4. MICROSERVIZIO RENTALS (.NET)
+  # 4. MICROSERVIZIO RENTALS (.NET) - Porta 5003
   # ----------------------------------------
   rentals:
     build: 
@@ -78,7 +79,7 @@ services:
     ports:
       - "5003:5003"
     environment:
-      ConnectionStrings__DefaultConnection: "Server=mssql_db;Database=rentals_db;User Id=sa;Password=LaTuaPasswordComplessa123!;TrustServerCertificate=true;"
+      ConnectionStrings__DefaultConnection: "Server=mssql;Database=rentals_db;User Id=sa;Password=LaTuaPasswordComplessa123!;TrustServerCertificate=true;"
       ASPNETCORE_URLS: http://+:5003
       Services__UserService: "http://users:5001"
       Services__MovieService: "http://moviecatalog:5002"
@@ -94,7 +95,35 @@ services:
         condition: service_started
 
   # ----------------------------------------
-  # 5. MICROSERVIZIO BANK/PAYMENTS (.NET)
+  # 5. MICROSERVIZIO SHOPPING CART (.NET) - Porta 5005 (NUOVA PORTA)
+  # ----------------------------------------
+  shoppingcart:
+    build: 
+      context: .
+      dockerfile: ./ShoppingCartService/Dockerfile 
+    container_name: shopping_cart_service
+    restart: always
+    ports:
+      - "5005:5005" 
+    environment:
+      # Il carrello usa lo stesso DB di Rentals per le sue migrazioni
+      ConnectionStrings__DefaultConnection: "Server=mssql;Database=rentals_db;User Id=sa;Password=LaTuaPasswordComplessa123!;TrustServerCertificate=true;"
+      ASPNETCORE_URLS: http://+:5005
+      Services__UserService: "http://users:5001"
+      Services__MovieService: "http://moviecatalog:5002"
+      JwtSettings__SecretKey: "LaTuaChiaveSegretaSuperSicuraAlmeno32Caratteri"
+      JwtSettings__Issuer: "UserService"
+      JwtSettings__Audience: "MovieRentalApp"
+    depends_on:
+      mssql:
+        condition: service_healthy
+      users:
+        condition: service_started
+      moviecatalog:
+        condition: service_started
+        
+  # ----------------------------------------
+  # 6. MICROSERVIZIO BANK/PAYMENTS (.NET) - Porta 5004 (VECCHIA PORTA)
   # ----------------------------------------
   bank:
     build: 
@@ -104,8 +133,8 @@ services:
     restart: always
     ports:
       - "5004:5004"
-    environment:
-      ConnectionStrings__DefaultConnection: "Server=mssql_db;Database=payments_db;User Id=sa;Password=LaTuaPasswordComplessa123!;TrustServerCertificate=true;"
+    environment: 
+      ConnectionStrings__DefaultConnection: "Server=mssql;Database=payments_db;User Id=sa;Password=LaTuaPasswordComplessa123!;TrustServerCertificate=true;"
       ASPNETCORE_URLS: http://+:5004
       JwtSettings__SecretKey: "LaTuaChiaveSegretaSuperSicuraAlmeno32Caratteri"
       JwtSettings__Issuer: "UserService"
@@ -117,7 +146,7 @@ services:
         condition: service_started
 
   # ----------------------------------------
-  # 6. FRONTEND REACT (Nginx)
+  # 7. FRONTEND REACT (Nginx)
   # ----------------------------------------
   frontend:
     build:
@@ -131,8 +160,9 @@ services:
       - users
       - rentals
       - moviecatalog
+      - shoppingcart
       - bank
 
-# ✅ UNICA SEZIONE VOLUMES A LIVELLO ROOT
+# ✅ SEZIONE VOLUMES A LIVELLO ROOT (Corretto da 'voling')
 volumes:
   mssql-data: {}
