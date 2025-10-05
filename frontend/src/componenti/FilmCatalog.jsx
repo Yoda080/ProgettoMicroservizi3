@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import './FilmCatalog.css';
+import './Dashboard.css';
 
-const FilmCatalog = ({ onBack }) => {  // ✅ Ricevi onBack come prop invece di useNavigate
+const FilmCatalog = ({ onBack }) => {
   const [films, setFilms] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isAdding, setIsAdding] = useState(false);
   const [editingFilm, setEditingFilm] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -20,16 +19,12 @@ const FilmCatalog = ({ onBack }) => {  // ✅ Ricevi onBack come prop invece di 
     releaseYear: ''
   });
 
-  // URL base dell'API per i film
   const API_BASE = 'http://localhost:5002/api/movies';
 
-  // Funzione per ottenere tutti i film
   const fetchFilms = async () => {
     try {
       setLoading(true);
       setError('');
-      
-      console.log('🔍 Tentativo di connessione a:', API_BASE);
       
       const response = await fetch(API_BASE, {
         method: 'GET',
@@ -38,26 +33,19 @@ const FilmCatalog = ({ onBack }) => {  // ✅ Ricevi onBack come prop invece di 
         }
       });
 
-      console.log('✅ Risposta ricevuta, status:', response.status);
-
       if (response.ok) {
         const data = await response.json();
-        console.log('📦 Dati ricevuti dall\'API:', data);
         
-        // Controlla se i dati sono un array o sono contenuti in una proprietà
         let filmsArray = data;
         if (data && typeof data === 'object' && !Array.isArray(data)) {
           filmsArray = data.movies || data.items || data.data || [];
         }
         
         if (Array.isArray(filmsArray)) {
-          // Mappa i campi BASATA SULLA STRUTTURA REALE dell'API
           const filmsWithMappedFields = filmsArray.map(film => {
             return {
               title: film.title || 'Titolo sconosciuto',
-              // Usiamo category al posto di genre
               genre: film.category || 'Genere non disponibile',
-              // Mettiamo releaseYear come year
               year: film.releaseYear || 'N/D',
               director: film.director || 'Regista non disponibile',
               description: film.description || 'Descrizione non disponibile',
@@ -70,30 +58,24 @@ const FilmCatalog = ({ onBack }) => {  // ✅ Ricevi onBack come prop invece di 
           });
           
           setFilms(filmsWithMappedFields);
-          console.log('🎬 Film mappati correttamente:', filmsWithMappedFields);
         } else {
-          console.warn('⚠️ I dati non sono un array:', filmsArray);
           setFilms([]);
           setError('Formato dati non supportato dal server');
         }
       } else {
-        console.warn('⚠️ Risposta non ok, status:', response.status);
         setError(`Errore dal server: ${response.status} ${response.statusText}`);
       }
     } catch (error) {
-      console.error('❌ Errore di connessione completo:', error);
       setError('Impossibile connettersi al server. Verifica che il backend sia avviato sulla porta 5002');
     } finally {
       setLoading(false);
     }
   };
 
-  // Carica i film all'avvio
   useEffect(() => {
     fetchFilms();
   }, []);
 
-  // Filtra i film in base alla ricerca
   const filteredFilms = films.filter(film =>
     film.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     film.director?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -101,7 +83,6 @@ const FilmCatalog = ({ onBack }) => {  // ✅ Ricevi onBack come prop invece di 
     film.category?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Funzione per gestire i valori nulli o undefined
   const getSafeValue = (value, defaultValue = 'N/D') => {
     if (value === null || value === undefined || value === '' || value === 'N/D' || value === 'Unknown') {
       return defaultValue;
@@ -109,7 +90,6 @@ const FilmCatalog = ({ onBack }) => {  // ✅ Ricevi onBack come prop invece di 
     return value;
   };
 
-  // Gestione input form
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     if (editingFilm) {
@@ -119,55 +99,6 @@ const FilmCatalog = ({ onBack }) => {  // ✅ Ricevi onBack come prop invece di 
     }
   };
 
-  // Aggiungi un nuovo film
-  const handleAddFilm = async () => {
-    try {
-      const filmToAdd = {
-        title: newFilm.title,
-        description: newFilm.description,
-        duration: parseInt(newFilm.duration),
-        price: parseFloat(newFilm.price),
-        category: newFilm.genre, // Inviiamo genre come category
-        releaseYear: parseInt(newFilm.releaseYear || newFilm.year)
-      };
-
-      const response = await fetch(API_BASE, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(filmToAdd)
-      });
-
-      if (response.ok) {
-        const addedFilm = await response.json();
-        // Aggiungiamo i campi mancanti per la visualizzazione
-        const filmForDisplay = {
-          ...addedFilm,
-          director: newFilm.director,
-          genre: newFilm.genre,
-          year: newFilm.year
-        };
-        setFilms(prev => [...prev, filmForDisplay]);
-        setNewFilm({
-          title: '',
-          genre: '',
-          year: '',
-          director: '',
-          description: '',
-          price: '',
-          duration: '',
-          category: '',
-          releaseYear: ''
-        });
-        setIsAdding(false);
-      }
-    } catch (error) {
-      console.error('Errore nell\'aggiunta del film:', error);
-    }
-  };
-
-  // Salva le modifiche a un film
   const handleSaveEdit = async () => {
     try {
       const filmToUpdate = {
@@ -189,7 +120,6 @@ const FilmCatalog = ({ onBack }) => {  // ✅ Ricevi onBack come prop invece di 
 
       if (response.ok) {
         const updatedFilm = await response.json();
-        // Manteniamo i campi extra per la visualizzazione
         const filmForDisplay = {
           ...updatedFilm,
           director: editingFilm.director,
@@ -204,7 +134,6 @@ const FilmCatalog = ({ onBack }) => {  // ✅ Ricevi onBack come prop invece di 
     }
   };
 
-  // Elimina un film
   const handleDeleteFilm = async (id) => {
     if (window.confirm('Sei sicuro di voler eliminare questo film?')) {
       try {
@@ -221,13 +150,9 @@ const FilmCatalog = ({ onBack }) => {  // ✅ Ricevi onBack come prop invece di 
     }
   };
 
-  // ✅ FUNZIONE PER TORNARE ALLA DASHBOARD
   const handleBackToDashboard = () => {
     if (onBack) {
-      onBack(); // Usa la prop
-    } else {
-      // Fallback se la prop non è disponibile
-      window.location.href = '/#/dashboard';
+      onBack();
     }
   };
 
@@ -236,16 +161,15 @@ const FilmCatalog = ({ onBack }) => {  // ✅ Ricevi onBack come prop invece di 
       <header className="catalog-header">
         <h1>Catalogo Film</h1>
         <div>
-          <button className="logout-btn" onClick={handleBackToDashboard}>
+          <button className="back-btn" onClick={handleBackToDashboard}>
             Torna alla Dashboard
           </button>
         </div>
       </header>
 
-      {/* Messaggio di errore */}
       {error && (
         <div className="error-message">
-          <h4>❌ Errore di Connessione</h4>
+          <h4>Errore di Connessione</h4>
           <p>{error}</p>
           <button onClick={fetchFilms} className="retry-btn">
             Riprova
@@ -255,7 +179,6 @@ const FilmCatalog = ({ onBack }) => {  // ✅ Ricevi onBack come prop invece di 
 
       <div className="catalog-controls">
         <div className="search-box">
-          <i className="fas fa-search"></i>
           <input
             type="text"
             placeholder="Cerca titolo, regista, genere o categoria..."
@@ -265,7 +188,6 @@ const FilmCatalog = ({ onBack }) => {  // ✅ Ricevi onBack come prop invece di 
         </div>
       </div>
 
-      {/* Form per modificare un film esistente */}
       {editingFilm && (
         <div className="film-form">
           <h3>Modifica Film</h3>
@@ -333,7 +255,6 @@ const FilmCatalog = ({ onBack }) => {  // ✅ Ricevi onBack come prop invece di 
         </div>
       )}
 
-      {/* Griglia dei film */}
       <div className="films-grid">
         {loading ? (
           <div className="loading">Caricamento in corso...</div>
@@ -354,17 +275,16 @@ const FilmCatalog = ({ onBack }) => {  // ✅ Ricevi onBack come prop invece di 
               <p className="film-description">{getSafeValue(film.description, 'Nessuna descrizione disponibile')}</p>
               <div className="film-actions">
                 <button className="edit-btn" onClick={() => setEditingFilm(film)}>
-                  <i className="fas fa-edit"></i> Modifica
+                  Modifica
                 </button>
                 <button className="delete-btn" onClick={() => handleDeleteFilm(film.id)}>
-                  <i className="fas fa-trash"></i> Elimina
+                  Elimina
                 </button>
               </div>
             </div>
           ))
         ) : (
           <div className="no-films">
-            <i className="fas fa-film"></i>
             <p>{searchTerm ? 'Nessun film trovato' : 'Nessun film nel catalogo'}</p>
           </div>
         )}

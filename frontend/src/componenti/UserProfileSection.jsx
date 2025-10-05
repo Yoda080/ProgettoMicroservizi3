@@ -14,15 +14,11 @@ const UserProfileSection = ({ onBack, onNavigate }) => {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        console.log('👤 useEffect - Caricamento dati profilo');
-        
         if (!token) {
-            console.log('❌ Token mancante');
             setError("Token di autenticazione mancante.");
             setLoading(false);
             return;
         }
-
         fetchUserData();
     }, [token]);
 
@@ -31,7 +27,6 @@ const UserProfileSection = ({ onBack, onNavigate }) => {
         setError(null);
         
         try {
-            // ✅ PROFILO BASE
             const baseProfile = {
                 userId: userId || 'ID-non-disponibile',
                 username: username || 'Utente',
@@ -41,7 +36,6 @@ const UserProfileSection = ({ onBack, onNavigate }) => {
             
             setProfile(baseProfile);
 
-            // ✅ BALANCE
             try {
                 const balanceResponse = await fetch('http://localhost:5004/api/payments/balance', {
                     headers: {
@@ -53,44 +47,26 @@ const UserProfileSection = ({ onBack, onNavigate }) => {
                 if (balanceResponse.ok) {
                     const balanceData = await balanceResponse.json();
                     setBalance(balanceData.balance);
-                    console.log('✅ Balance loaded:', balanceData.balance);
                 } else {
-                    console.warn('⚠️ Servizio balance non disponibile');
                     setBalance(50.00);
                 }
-            } catch (balanceError) {
-                console.warn('⚠️ Errore balance:', balanceError.message);
+            } catch {
                 setBalance(50.00);
             }
 
-            // ✅ RENTALS - CARICA DAL LOCALSTORAGE
             try {
-                console.log('📡 Caricamento rentals dal localStorage...');
                 const storedRentals = JSON.parse(localStorage.getItem('userRentals') || '[]');
-                console.log('📦 Dati RAW dal localStorage:', storedRentals);
-                
-                // Filtra solo i noleggi attivi (non scaduti)
                 const activeRentals = storedRentals.filter(rental => {
                     if (!rental.expirationDate) return false;
-                    
                     const expirationDate = new Date(rental.expirationDate);
-                    const now = new Date();
-                    const isActive = expirationDate > now;
-                    
-                    console.log(`🎬 Film: ${rental.movieTitle}, Scadenza: ${expirationDate}, Attivo: ${isActive}`);
-                    return isActive;
+                    return expirationDate > new Date();
                 });
-                
-                console.log(`✅ ${activeRentals.length} noleggi attivi dal localStorage:`, activeRentals);
                 setRentals(activeRentals);
-                
-            } catch (rentalsError) {
-                console.warn('⚠️ Errore caricamento rentals dal localStorage:', rentalsError);
+            } catch {
                 setRentals([]);
             }
 
         } catch (err) {
-            console.error("❌ Errore critico:", err);
             setError("Errore nel caricamento dei dati: " + err.message);
         } finally {
             setLoading(false);
@@ -98,20 +74,16 @@ const UserProfileSection = ({ onBack, onNavigate }) => {
     };
 
     const handleRefresh = () => {
-        console.log('👤 Refresh manuale');
         fetchUserData();
     };
 
-    // ✅ RENDERIZZA I NOLEGGI DINAMICAMENTE
     const renderRentals = () => {
-        console.log('🎬 Rendering rentals:', rentals);
-        
         if (rentals.length === 0) {
             return (
-                <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
-                    <Film className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500 text-lg">Nessun noleggio attivo</p>
-                    <p className="text-gray-400 text-sm mt-2">
+                <div className="empty-state">
+                    <Film className="empty-state-icon" size={64} />
+                    <p className="empty-state-title">Nessun noleggio attivo</p>
+                    <p className="empty-state-description">
                         I noleggi acquistati appariranno qui automaticamente
                     </p>
                 </div>
@@ -121,30 +93,25 @@ const UserProfileSection = ({ onBack, onNavigate }) => {
         return (
             <div className="rentals-grid">
                 {rentals.map((rental, index) => {
-                    console.log('🎬 Rendering rental:', rental);
-                    
                     const expirationDate = new Date(rental.expirationDate);
                     const rentalDate = new Date(rental.rentalDate || rental.createdAt);
                     const now = new Date();
                     const hoursRemaining = Math.floor((expirationDate - now) / (1000 * 60 * 60));
                     
-                    let status, statusText, statusIcon, statusClass;
+                    let statusText, statusIcon, statusClass;
                     
                     if (hoursRemaining <= 0) {
-                        status = 'expired';
                         statusText = 'Scaduto';
-                        statusIcon = <AlertTriangle className="w-4 h-4 inline mr-1" />;
+                        statusIcon = <AlertTriangle size={16} />;
                         statusClass = 'expired';
                     } else if (hoursRemaining <= 24) {
-                        status = 'warning';
                         statusText = `Scade in ${hoursRemaining}h`;
-                        statusIcon = <Clock className="w-4 h-4 inline mr-1" />;
+                        statusIcon = <Clock size={16} />;
                         statusClass = 'warning';
                     } else {
-                        status = 'active';
                         const daysRemaining = Math.floor(hoursRemaining / 24);
                         statusText = `Scade in ${daysRemaining} giorni`;
-                        statusIcon = <CheckCircle className="w-4 h-4 inline mr-1" />;
+                        statusIcon = <CheckCircle size={16} />;
                         statusClass = 'active';
                     }
                     
@@ -162,11 +129,11 @@ const UserProfileSection = ({ onBack, onNavigate }) => {
                             
                             <div className="rental-details">
                                 <div className="rental-detail">
-                                    <Calendar className="w-4 h-4 text-gray-500" />
+                                    <Calendar size={16} />
                                     <span>Acquistato: {rentalDate.toLocaleDateString('it-IT')}</span>
                                 </div>
                                 <div className="rental-detail">
-                                    <Clock className="w-4 h-4 text-gray-500" />
+                                    <Clock size={16} />
                                     <span>Scade: {expirationDate.toLocaleDateString('it-IT')}</span>
                                 </div>
                                 {rental.price && (
@@ -191,10 +158,10 @@ const UserProfileSection = ({ onBack, onNavigate }) => {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+            <div className="loading-container">
                 <div className="text-center">
-                    <RefreshCw className="w-12 h-12 animate-spin text-blue-600 mb-4 mx-auto" />
-                    <p className="text-xl text-gray-700 font-semibold">Caricamento profilo...</p>
+                    <RefreshCw className="loading-spinner" size={48} />
+                    <p className="text-xl text-gray-700 font-semibold mt-4">Caricamento profilo...</p>
                 </div>
             </div>
         );
@@ -203,17 +170,11 @@ const UserProfileSection = ({ onBack, onNavigate }) => {
     return (
         <div className="profile-container">
             <div className="flex justify-between items-center mb-6">
-                <button 
-                    onClick={onBack}
-                    className="back-button"
-                >
+                <button onClick={onBack} className="back-button">
                     &larr; Torna alla Dashboard
                 </button>
-                <button
-                    onClick={handleRefresh}
-                    className="refresh-button flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
-                >
-                    <RefreshCw className="w-4 h-4" />
+                <button onClick={handleRefresh} className="refresh-button">
+                    <RefreshCw size={16} />
                     Aggiorna Dati
                 </button>
             </div>
@@ -250,10 +211,9 @@ const UserProfileSection = ({ onBack, onNavigate }) => {
                         </div>
                     </div>
 
-                    {/* ✅ SEZIONE NOLEGGI AGGIORNATA */}
                     <div className="profile-card">
-                        <h2 className="profile-card-title flex items-center">
-                            <Film className="w-6 h-6 mr-2 text-blue-600" />
+                        <h2 className="profile-card-title">
+                            <Film size={24} />
                             I Miei Noleggi Attivi ({rentals.length})
                         </h2>
                         {renderRentals()}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import './Login.css';
+import './Dashboard.css';
 
-const Login = ({ onLoginSuccess, onSwitchToRegister }) => {  // ✅ Aggiungi onSwitchToRegister
+const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
     const [isLoginForm, setIsLoginForm] = useState(true);
     const [apiBaseUrl, setApiBaseUrl] = useState("http://localhost:5001/api/Auth");
     const [message, setMessage] = useState({ text: '', type: '', show: false });
@@ -38,9 +38,9 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {  // ✅ Aggiungi onS
 
     const switchToRegister = () => {
         if (onSwitchToRegister) {
-            onSwitchToRegister(); // ✅ Usa la prop per navigare alla registrazione
+            onSwitchToRegister();
         } else {
-            setIsLoginForm(false); // Fallback
+            setIsLoginForm(false);
         }
     };
 
@@ -52,12 +52,12 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {  // ✅ Aggiungi onS
         try {
             const response = await fetch(`${apiBaseUrl}/status`);
             if (response.ok) {
-                setApiStatus({ connected: true, text: '✅ Connesso al backend .NET' });
+                setApiStatus({ connected: true, text: 'Connesso al backend' });
             } else {
-                setApiStatus({ connected: false, text: '❌ Backend non raggiungibile' });
+                setApiStatus({ connected: false, text: 'Backend non raggiungibile' });
             }
         } catch (error) {
-            setApiStatus({ connected: false, text: '❌ Errore di connessione al backend' });
+            setApiStatus({ connected: false, text: 'Errore di connessione al backend' });
         }
     };
 
@@ -66,7 +66,6 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {  // ✅ Aggiungi onS
         setLoading(prev => ({ ...prev, login: true }));
         
         try {
-            console.log('🔐 Tentativo di login...');
             const loginData = {
                 email: formData.loginEmail,
                 password: formData.loginPassword
@@ -80,12 +79,8 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {  // ✅ Aggiungi onS
                 body: JSON.stringify(loginData)
             });
 
-            console.log('📨 Risposta login:', response.status);
-
             if (response.ok) {
                 const data = await response.json();
-                console.log('✅ Login successo:', data);
-                
                 showMessage('Accesso effettuato con successo!', 'success');
                 
                 if (data.token) {
@@ -93,13 +88,8 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {  // ✅ Aggiungi onS
                     localStorage.setItem('userId', data.userId || data.id);
                     localStorage.setItem('username', data.username || formData.loginEmail.split('@')[0]);
                     
-                    console.log('🔐 Token salvato, redirect a dashboard...');
-                    // ✅ USA la prop onLoginSuccess
                     if (onLoginSuccess) {
                         onLoginSuccess();
-                    } else {
-                        // Fallback se la prop non è disponibile
-                        window.location.reload();
                     }
                 } else {
                     showMessage('Token non ricevuto dal server', 'error');
@@ -107,11 +97,9 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {  // ✅ Aggiungi onS
                 
             } else {
                 const errorData = await response.json();
-                console.error('❌ Errore login:', errorData);
                 showMessage(errorData.message || 'Email o password non validi', 'error');
             }
         } catch (error) {
-            console.error('❌ Errore di rete:', error);
             showMessage('Impossibile connettersi al server. Verifica che il backend sia attivo.', 'error');
         } finally {
             setLoading(prev => ({ ...prev, login: false }));
@@ -145,7 +133,6 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {  // ✅ Aggiungi onS
         setLoading(prev => ({ ...prev, register: true }));
         
         try {
-            console.log('📝 Tentativo di registrazione...');
             const registrationData = {
                 username: formData.username,
                 email: formData.email,
@@ -161,12 +148,8 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {  // ✅ Aggiungi onS
                 body: JSON.stringify(registrationData)
             });
 
-            console.log('📨 Risposta registrazione:', response.status);
-
             if (response.ok) {
                 const data = await response.json();
-                console.log('✅ Registrazione successo:', data);
-                
                 showMessage('Registrazione completata con successo!', 'success');
                 
                 if (data.token) {
@@ -174,13 +157,8 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {  // ✅ Aggiungi onS
                     localStorage.setItem('userId', data.userId || data.id);
                     localStorage.setItem('username', data.username || formData.username);
                     
-                    console.log('🔐 Token salvato, redirect a dashboard...');
-                    // ✅ USA la prop onLoginSuccess
                     if (onLoginSuccess) {
                         onLoginSuccess();
-                    } else {
-                        // Fallback se la prop non è disponibile
-                        window.location.reload();
                     }
                 } else {
                     showMessage('Token non ricevuto dal server', 'error');
@@ -196,7 +174,6 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {  // ✅ Aggiungi onS
                 });
             } else {
                 const errorData = await response.json();
-                console.error('❌ Errore registrazione:', errorData);
                 
                 if (response.status === 409) {
                     showMessage('Email o username già in uso', 'error');
@@ -205,7 +182,6 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {  // ✅ Aggiungi onS
                 }
             }
         } catch (error) {
-            console.error('❌ Errore di rete:', error);
             showMessage('Impossibile connettersi al server. Verifica che il backend sia attivo.', 'error');
         } finally {
             setLoading(prev => ({ ...prev, register: false }));
@@ -258,7 +234,7 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {  // ✅ Aggiungi onS
                                 </div>
                                 
                                 <button type="submit" className="btn" disabled={loading.login}>
-                                    {loading.login ? '🔄 Accesso in corso...' : '🔐 Accedi'}
+                                    {loading.login ? 'Accesso in corso...' : 'Accedi'}
                                 </button>
                             </form>
                         ) : (
@@ -321,7 +297,7 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {  // ✅ Aggiungi onS
                                 </div>
                                 
                                 <button type="submit" className="btn" disabled={loading.register}>
-                                    {loading.register ? '🔄 Registrazione in corso...' : '📝 Registrati'}
+                                    {loading.register ? 'Registrazione in corso...' : 'Registrati'}
                                 </button>
                             </form>
                         )}
@@ -330,11 +306,11 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {  // ✅ Aggiungi onS
                     <div className="switch">
                         <span>{isLoginForm ? 'Non hai un account?' : 'Hai già un account?'}</span> 
                         {isLoginForm ? (
-                            <a onClick={switchToRegister} className="switch-link" style={{cursor: 'pointer'}}>
+                            <a onClick={switchToRegister} className="switch-link">
                                 Registrati
                             </a>
                         ) : (
-                            <a onClick={switchToLogin} className="switch-link" style={{cursor: 'pointer'}}>
+                            <a onClick={switchToLogin} className="switch-link">
                                 Accedi
                             </a>
                         )}
@@ -343,12 +319,6 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {  // ✅ Aggiungi onS
                     <div className="api-status">
                         <div className={`status-indicator ${apiStatus.connected ? 'connected' : 'disconnected'}`}></div>
                         <span>{apiStatus.text}</span>
-                    </div>
-
-                    {/* Debug Info */}
-                    <div className="debug-info">
-                        <p><strong>Debug:</strong> Token: {localStorage.getItem('authToken') ? '✅ Presente' : '❌ Assente'}</p>
-                        <p><strong>URL Backend:</strong> {apiBaseUrl}</p>
                     </div>
                 </div>
             </div>

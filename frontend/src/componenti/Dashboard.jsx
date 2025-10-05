@@ -1,17 +1,15 @@
 import React from 'react';
 import './Dashboard.css';
 
-const Dashboard = ({ onNavigate }) => {  // ✅ Ricevi onNavigate come prop
+const Dashboard = ({ onNavigate }) => {
     const username = localStorage.getItem('username') || 'Utente';
     const token = localStorage.getItem('authToken');
     const userId = localStorage.getItem('userId');
 
     const handleLogout = () => {
-        console.log('🚪 Logout in corso...');
         localStorage.removeItem('authToken');
         localStorage.removeItem('userId');
         localStorage.removeItem('username');
-        // 🔥 Redirect completo per pulire lo stato
         window.location.href = '/';
     };
 
@@ -21,11 +19,8 @@ const Dashboard = ({ onNavigate }) => {  // ✅ Ricevi onNavigate come prop
             if (onNavigate) onNavigate('login');
             return;
         }
-        console.log('🎬 Navigazione al catalogo film...');
         if (onNavigate) {
             onNavigate('filmCatalog');
-        } else {
-            window.location.href = '/#/filmCatalog';
         }
     };
 
@@ -35,11 +30,8 @@ const Dashboard = ({ onNavigate }) => {  // ✅ Ricevi onNavigate come prop
             if (onNavigate) onNavigate('login');
             return;
         }
-        console.log('📚 Navigazione ai noleggi...');
         if (onNavigate) {
             onNavigate('rentals');
-        } else {
-            window.location.href = '/#/rentals';
         }
     };
 
@@ -49,11 +41,8 @@ const Dashboard = ({ onNavigate }) => {  // ✅ Ricevi onNavigate come prop
             if (onNavigate) onNavigate('login');
             return;
         }
-        console.log('👤 Navigazione al profilo...');
         if (onNavigate) {
             onNavigate('profile');
-        } else {
-            window.location.href = '/#/profile';
         }
     };
 
@@ -63,21 +52,14 @@ const Dashboard = ({ onNavigate }) => {  // ✅ Ricevi onNavigate come prop
             if (onNavigate) onNavigate('login');
             return;
         }
-        console.log('💰 Navigazione alla banca...');
         if (onNavigate) {
             onNavigate('bank');
-        } else {
-            window.location.href = '/#/bank';
         }
     };
 
-    // Se non c'è il token, redirect al login
     if (!token) {
-        console.log('❌ Nessun token, redirect al login');
         if (onNavigate) {
             onNavigate('login');
-        } else {
-            window.location.href = '/#/login';
         }
         return null;
     }
@@ -85,17 +67,16 @@ const Dashboard = ({ onNavigate }) => {  // ✅ Ricevi onNavigate come prop
     return (
         <div className="dashboard-container">
             <header className="dashboard-header">
-                <h1 className="dashboard-title">🎬 Movie Rental Dashboard</h1>
+                <h1 className="dashboard-title">Movie Rental Dashboard</h1>
                 <div className="user-section">
                     <div className="user-info">
                         <span className="welcome-message">Ciao, <strong>{username}</strong>!</span>
-                        <span className="user-id">ID: {userId}</span>
                     </div>
                     <button
                         onClick={handleLogout}
                         className="logout-btn"
                     >
-                        🚪 Logout
+                        Logout
                     </button>
                 </div>
             </header>
@@ -107,7 +88,6 @@ const Dashboard = ({ onNavigate }) => {  // ✅ Ricevi onNavigate come prop
                 </div>
 
                 <div className="dashboard-sections">
-                    {/* 1. Card Catalogo Film */}
                     <div className="dashboard-card film-card">
                         <div className="card-icon">🎬</div>
                         <h3>Catalogo Film</h3>
@@ -116,11 +96,10 @@ const Dashboard = ({ onNavigate }) => {  // ✅ Ricevi onNavigate come prop
                             onClick={handleFilmCatalog}
                             className="card-button primary"
                         >
-                            📋 Vai al Catalogo
+                            Vai al Catalogo
                         </button>
                     </div>
 
-                    {/* 2. Card I miei Noleggi */}
                     <div className="dashboard-card rentals-card">
                         <div className="card-icon">📚</div>
                         <h3>I miei Noleggi</h3>
@@ -129,11 +108,10 @@ const Dashboard = ({ onNavigate }) => {  // ✅ Ricevi onNavigate come prop
                             onClick={handleRentals}
                             className="card-button rentals"
                         >
-                            🕒 Vai ai Noleggi
+                            Vai ai Noleggi
                         </button>
                     </div>
 
-                    {/* 3. Card Profilo Utente */}
                     <div className="dashboard-card profile-card">
                         <div className="card-icon">👤</div>
                         <h3>Profilo Utente</h3>
@@ -142,11 +120,10 @@ const Dashboard = ({ onNavigate }) => {  // ✅ Ricevi onNavigate come prop
                             onClick={handleUserProfile}
                             className="card-button profile"
                         >
-                            ⚙️ Vedi Profilo
+                            Vedi Profilo
                         </button>
                     </div>
 
-                    {/* 4. Card Servizio Banca/Credito */}
                     <div className="dashboard-card bank-card">
                         <div className="card-icon">💰</div>
                         <h3>Gestione Credito</h3>
@@ -155,19 +132,8 @@ const Dashboard = ({ onNavigate }) => {  // ✅ Ricevi onNavigate come prop
                             onClick={handleBank}
                             className="card-button bank"
                         >
-                            💳 Vai al Conto
+                            Vai al Conto
                         </button>
-                    </div>
-                </div>
-
-                {/* Debug Info */}
-                <div className="debug-section">
-                    <h4>🔍 Informazioni Debug</h4>
-                    <div className="debug-info">
-                        <p><strong>Token:</strong> {token ? '✅ Presente' : '❌ Assente'}</p>
-                        <p><strong>User ID:</strong> {userId || 'N/A'}</p>
-                        <p><strong>Username:</strong> {username}</p>
-                        <p><strong>Session:</strong> Attiva</p>
                     </div>
                 </div>
             </div>

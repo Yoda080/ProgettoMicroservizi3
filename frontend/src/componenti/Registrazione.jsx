@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './Registrazione.css';
 
-const Registrazione = ({ onRegisterSuccess, onSwitchToLogin }) => {  // ✅ Corretto il nome della prop
+const Registrazione = ({ onRegisterSuccess, onSwitchToLogin }) => {
   const [formData, setFormData] = useState({
     nome: '',
     cognome: '',
@@ -28,7 +28,6 @@ const Registrazione = ({ onRegisterSuccess, onSwitchToLogin }) => {  // ✅ Corr
     setError('');
     setSuccess('');
 
-    // Validazioni
     if (!formData.nome || !formData.cognome || !formData.email || !formData.password || !formData.confermaPassword) {
       setError('Tutti i campi sono obbligatori');
       setLoading(false);
@@ -47,7 +46,6 @@ const Registrazione = ({ onRegisterSuccess, onSwitchToLogin }) => {  // ✅ Corr
       return;
     }
 
-    // Validazione email
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailPattern.test(formData.email)) {
       setError('Inserisci un indirizzo email valido');
@@ -55,19 +53,12 @@ const Registrazione = ({ onRegisterSuccess, onSwitchToLogin }) => {  // ✅ Corr
       return;
     }
 
-    // ⚠️ STRUTTURA DATI PER IL BACKEND
     const registrationData = {
       username: `${formData.nome.toLowerCase()}.${formData.cognome.toLowerCase()}`,
       email: formData.email,
       password: formData.password,
       confirmPassword: formData.confermaPassword
     };
-
-    console.log('📨 Dati inviati al backend:', {
-      ...registrationData,
-      password: '***',
-      confirmPassword: '***'
-    });
 
     try {
       const response = await fetch('http://localhost:5001/api/Auth/register', {
@@ -78,32 +69,16 @@ const Registrazione = ({ onRegisterSuccess, onSwitchToLogin }) => {  // ✅ Corr
         body: JSON.stringify(registrationData)
       });
 
-      console.log('📨 Status risposta:', response.status, response.statusText);
-
       const responseData = await response.json();
-      console.log('📨 Dati risposta:', responseData);
 
       if (response.ok) {
-        console.log('✅ Registrazione completata:', responseData);
-        
-        // ⚠️ VERIFICA SE IL TOKEN È PRESENTE
         if (responseData.token) {
-          // Salva il token e i dati utente
           localStorage.setItem('authToken', responseData.token);
           localStorage.setItem('userId', responseData.userId || responseData.id || 'unknown');
           localStorage.setItem('username', responseData.username || formData.email);
           
           setSuccess('Registrazione avvenuta con successo! Reindirizzamento...');
           
-          // Debug del token salvato
-          try {
-            const tokenPayload = JSON.parse(atob(responseData.token.split('.')[1]));
-            console.log('🔐 Token salvato - Payload:', tokenPayload);
-          } catch (tokenError) {
-            console.error('❌ Errore parsing token:', tokenError);
-          }
-          
-          // Reset form
           setFormData({
             nome: '',
             cognome: '',
@@ -112,25 +87,17 @@ const Registrazione = ({ onRegisterSuccess, onSwitchToLogin }) => {  // ✅ Corr
             confermaPassword: ''
           });
           
-          // ✅ CORRETTO: Usa la prop invece di window.location.href
           setTimeout(() => {
             if (onRegisterSuccess) {
-              console.log('🔄 Chiamando onRegisterSuccess...');
               onRegisterSuccess(responseData);
-            } else {
-              console.error('❌ onRegisterSuccess non disponibile');
-              // Fallback sicuro senza refresh
-              window.location.reload();
             }
           }, 2000);
           
         } else {
           setError('Token non ricevuto dal server. La registrazione potrebbe non essere completa.');
-          console.error('❌ Token mancante nella risposta:', responseData);
         }
         
       } else {
-        // Gestione errori specifici
         if (response.status === 409) {
           setError('Email o username già in uso. Prova ad accedere o usa un altro indirizzo.');
         } else if (response.status === 400) {
@@ -138,15 +105,12 @@ const Registrazione = ({ onRegisterSuccess, onSwitchToLogin }) => {  // ✅ Corr
         } else if (response.status === 500) {
           setError('Errore interno del server. Riprova più tardi.');
         } else {
-          setError(responseData.message || `Errore durante la registrazione (${response.status}). Riprova più tardi.`);
+          setError(responseData.message || `Errore durante la registrazione. Riprova più tardi.`);
         }
-        
-        console.error('❌ Errore registrazione:', responseData);
       }
 
     } catch (error) {
-      console.error('❌ Errore di rete:', error);
-      setError('Impossibile connettersi al server. Verifica che: 1) Il backend .NET sia in esecuzione, 2) La porta 5001 sia libera, 3) Il endpoint /api/Auth/register esista.');
+      setError('Impossibile connettersi al server. Verifica la connessione e riprova.');
     } finally {
       setLoading(false);
     }
@@ -271,20 +235,6 @@ const Registrazione = ({ onRegisterSuccess, onSwitchToLogin }) => {  // ✅ Corr
             </span>
           </p>
         </div>
-
-        {/* Debug info - Solo in sviluppo */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="debug-info">
-            <strong>Debug Info:</strong><br/>
-            Backend: http://localhost:5001/api/Auth/register<br/>
-            Dati inviati: {JSON.stringify({
-              username: `${formData.nome.toLowerCase()}.${formData.cognome.toLowerCase()}`,
-              email: formData.email,
-              password: '***',
-              confirmPassword: '***'
-            })}
-          </div>
-        )}
       </div>
     </div>
   );

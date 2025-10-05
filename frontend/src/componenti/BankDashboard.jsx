@@ -2,10 +2,9 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './Dashboard.css';
 
-// URL del tuo Bank Service
 const BANK_SERVICE_URL = 'http://localhost:5004/api/payments';
 
-const BankDashboard = ({ onBack }) => {  // ✅ Ricevi onBack come prop invece di useNavigate
+const BankDashboard = ({ onBack }) => {
     const token = localStorage.getItem('authToken');
     
     const [balance, setBalance] = useState(null);
@@ -15,27 +14,20 @@ const BankDashboard = ({ onBack }) => {  // ✅ Ricevi onBack come prop invece d
 
     useEffect(() => {
         if (!token) {
-            // ✅ Usa la navigazione manuale invece di useNavigate
             if (onBack) {
                 onBack();
-            } else {
-                window.location.href = '/#/login';
             }
             return;
         }
         fetchBalance();
-    }, [token, onBack]);  // ✅ Aggiungi onBack alle dipendenze
+    }, [token, onBack]);
 
-    // ✅ FUNZIONE PER TORNARE ALLA DASHBOARD
     const handleBackToDashboard = () => {
         if (onBack) {
             onBack();
-        } else {
-            window.location.href = '/#/dashboard';
         }
     };
 
-    // Funzione per recuperare il saldo dal Bank Service
     const fetchBalance = async () => {
         setLoading(true);
         setMessage('');
@@ -47,15 +39,13 @@ const BankDashboard = ({ onBack }) => {  // ✅ Ricevi onBack come prop invece d
             });
             setBalance(response.data.balance);
         } catch (error) {
-            console.error("Errore nel recupero del saldo:", error.response || error);
-            setMessage(`Errore: ${error.response?.status === 401 ? 'Non Autorizzato. Rilogga.' : 'Impossibile connettersi al Bank Service.'}`);
+            setMessage('Errore: Impossibile connettersi al servizio bancario.');
             setBalance(null);
         } finally {
             setLoading(false);
         }
     };
 
-    // Funzione per effettuare un deposito
     const handleDeposit = async (e) => {
         e.preventDefault();
         const amount = parseFloat(depositAmount);
@@ -69,11 +59,10 @@ const BankDashboard = ({ onBack }) => {  // ✅ Ricevi onBack come prop invece d
         setMessage('');
 
         try {
-            // CORREZIONE: Il payload deve corrispondere al modello C# DepositRequest
             const response = await axios.post(`${BANK_SERVICE_URL}/deposit`, 
             { 
-                Amount: amount,  // "Amount" con A maiuscola come in C#
-                Currency: "EUR"  // "Currency" con C maiuscola
+                Amount: amount,
+                Currency: "EUR"
             }, 
             {
                 headers: {
@@ -82,25 +71,21 @@ const BankDashboard = ({ onBack }) => {  // ✅ Ricevi onBack come prop invece d
                 }
             });
 
-            // Aggiorna il saldo e mostra un messaggio di successo
             setBalance(response.data.newBalance);
             setMessage(`Successo! Depositati €${amount.toFixed(2)}. Nuovo Saldo: €${response.data.newBalance.toFixed(2)}`);
             setDepositAmount('');
         } catch (error) {
-            console.error("Errore nel deposito:", error.response || error);
-            setMessage(`Errore nel deposito: ${error.response?.data?.message || 'Problema di connessione o autorizzazione.'}`);
+            setMessage('Errore nel deposito: Problema di connessione o autorizzazione.');
         } finally {
             setLoading(false);
         }
     };
 
-    // Determina la classe CSS per il saldo in base al valore
     const getBalanceClass = () => {
         if (balance === null) return 'balance-neutral';
         return balance >= 0 ? 'balance-positive' : 'balance-negative';
     };
 
-    // Determina la classe CSS per il messaggio
     const getMessageClass = () => {
         return message.startsWith('Errore') ? 'error-message' : 'success-message';
     };
@@ -108,7 +93,7 @@ const BankDashboard = ({ onBack }) => {  // ✅ Ricevi onBack come prop invece d
     return (
         <div className="bank-container">
             <button 
-                onClick={handleBackToDashboard}  // ✅ Usa la funzione helper
+                onClick={handleBackToDashboard}
                 className="back-button"
             >
                 &larr; Torna alla Dashboard
