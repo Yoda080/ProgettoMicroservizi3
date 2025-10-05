@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { ShoppingCart, ArrowLeft, Trash2, CheckCircle, Film, DollarSign, Loader, AlertTriangle, Wallet } from 'lucide-react';
 import { useWallet } from './useWallet';
 
-const RENTAL_CHECKOUT_API_URL = 'http://localhost:5003/api/rentals/checkout';
-
 const Cart = ({ onBack, onNavigate }) => {
     const { 
         balance, 
@@ -14,31 +12,28 @@ const Cart = ({ onBack, onNavigate }) => {
     } = useWallet(); 
     
     const CART_STORAGE_KEY = 'movieCart';
+    const RENTALS_STORAGE_KEY = 'userRentals';
+    
     const [cartItems, setCartItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isProcessing, setIsProcessing] = useState(false);
     const [message, setMessage] = useState('');
     const [messageType, setMessageType] = useState('info');
 
-    // ✅ FUNZIONE PER NAVIGARE - SENZA FALLBACK
     const navigateTo = (view) => {
         console.log('🛒 Navigazione a:', view);
         if (onNavigate) {
             onNavigate(view);
         }
-        // ❌ RIMOSSO window.location.href - CAUSA 404
     };
 
-    // ✅ FUNZIONE PER TORNARE INDIETRO - SENZA FALLBACK
     const handleBack = () => {
         console.log('🛒 Torno indietro');
         if (onBack) {
             onBack();
         }
-        // ❌ RIMOSSO window.location.href - CAUSA 404
     };
 
-    // Funzione per mostrare messaggi
     const displayMessage = (text, type) => {
         setMessage(text);
         setMessageType(type);
@@ -85,7 +80,21 @@ const Cart = ({ onBack, onNavigate }) => {
     const isSufficientFunds = balance !== null && totalCostNum <= balance;
     const canCheckout = cartItems.length > 0 && isSufficientFunds && !isProcessing && !isWalletLoading;
 
-    // Gestisce il checkout completo
+    // ✅ FUNZIONE PER SALVARE I NOLEGGI NEL LOCALSTORAGE
+    const saveRentalsToLocalStorage = (rentals) => {
+        try {
+            const existingRentals = JSON.parse(localStorage.getItem(RENTALS_STORAGE_KEY) || '[]');
+            const updatedRentals = [...existingRentals, ...rentals];
+            localStorage.setItem(RENTALS_STORAGE_KEY, JSON.stringify(updatedRentals));
+            console.log('✅ Noleggi salvati nel localStorage:', rentals.length);
+            return true;
+        } catch (error) {
+            console.error('❌ Errore nel salvataggio dei noleggi:', error);
+            return false;
+        }
+    };
+
+    // ✅ CHECKOUT SEMPLIFICATO - SOLO PAGAMENTO E LOCALSTORAGE
     const handleCheckout = async () => {
         if (!canCheckout) {
             if (cartItems.length === 0) {
@@ -96,79 +105,45 @@ const Cart = ({ onBack, onNavigate }) => {
             return;
         }
 
-        const authToken = localStorage.getItem('authToken');
-        if (!authToken) {
-            displayMessage("Errore di autenticazione. Effettua il login.", 'error');
-            navigateTo('login');
-            return;
-        }
-
         setIsProcessing(true);
         setMessage('');
-        
-        // Converti gli ID in numeri
-        const movieIds = cartItems.map(item => parseInt(item.id));
 
         try {
-            displayMessage("Registrazione noleggio...", 'info');
-            
-            // Payload corretto per il backend
-            const rentalPayload = {
-                Items: movieIds,
-                TotalAmount: totalCostNum
-            };
-
-            console.log("Payload inviato:", rentalPayload);
-
-            const rentalResponse = await fetch(RENTAL_CHECKOUT_API_URL, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${authToken}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(rentalPayload)
-            });
-
-            if (!rentalResponse.ok) {
-                const errorText = await rentalResponse.text();
-                let errorDetails = `Status: ${rentalResponse.status}`;
-                try {
-                    const errorBody = JSON.parse(errorText);
-                    errorDetails = errorBody.message || errorDetails;
-                } catch {}
-                throw new Error(`Errore servizio noleggi: ${errorDetails}`);
-            }
-
-            const rentalResult = await rentalResponse.json();
-            console.log("Noleggio registrato:", rentalResult);
-
-            // FASE 2: Pagamento con il wallet
             displayMessage("Elaborazione pagamento...", 'info');
             
+            // ✅ FASE 1: SOLO PAGAMENTO (salta completamente il servizio rentals)
             const newBalance = await debitWallet(totalCostNum);
             
-            // FASE 3: Successo - Svuota carrello
+            // ✅ FASE 2: SALVA I NOLEGGI NEL LOCALSTORAGE
+            const purchasedRentals = cartItems.map(item => ({
+                id: `rental-${Date.now()}-${item.id}-${Math.random().toString(36).substr(2, 9)}`,
+                movieId: item.id,
+                movieTitle: item.title,
+                rentalDate: new Date().toISOString(),
+                expirationDate: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(), // 48 ore
+                price: getMoviePrice(item)
+            }));
+
+            const saveSuccess = saveRentalsToLocalStorage(purchasedRentals);
+            
+            // ✅ FASE 3: SUCCESSO - Svuota carrello
             setCartItems([]);
             localStorage.removeItem(CART_STORAGE_KEY);
             
             displayMessage(
-                `✅ Acquisto completato! Nuovo saldo: € ${newBalance.toFixed(2)}`, 
+                `✅ Acquisto completato! ${purchasedRentals.length} film noleggiati. Nuovo saldo: € ${newBalance.toFixed(2)}`, 
                 'success'
             );
+
+            console.log('🎬 Noleggi creati:', purchasedRentals);
 
             setTimeout(() => {
                 navigateTo('rentals');
             }, 3000);
 
         } catch (error) {
-            console.error("Errore durante il checkout:", error);
-            
-            if (error.message.includes("UNAUTHORIZED")) {
-                displayMessage("Sessione scaduta. Effettua nuovamente il login.", 'error');
-                navigateTo('login');
-            } else {
-                displayMessage(`Checkout fallito: ${error.message}`, 'error');
-            }
+            console.error("❌ Errore durante il checkout:", error);
+            displayMessage(`Checkout fallito: ${error.message}`, 'error');
             
             // Ricarica il saldo in caso di errore
             fetchBalance();

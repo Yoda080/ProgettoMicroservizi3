@@ -13,8 +13,6 @@ const UserProfileSection = ({ onBack, onNavigate }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // ✅ RIMUOVI dataLoaded e usa un approccio più semplice
-
     useEffect(() => {
         console.log('👤 useEffect - Caricamento dati profilo');
         
@@ -26,7 +24,7 @@ const UserProfileSection = ({ onBack, onNavigate }) => {
         }
 
         fetchUserData();
-    }, [token]); // ✅ Solo token come dipendenza
+    }, [token]);
 
     const fetchUserData = async () => {
         setLoading(true);
@@ -55,46 +53,44 @@ const UserProfileSection = ({ onBack, onNavigate }) => {
                 if (balanceResponse.ok) {
                     const balanceData = await balanceResponse.json();
                     setBalance(balanceData.balance);
+                    console.log('✅ Balance loaded:', balanceData.balance);
                 } else {
+                    console.warn('⚠️ Servizio balance non disponibile');
                     setBalance(50.00);
                 }
             } catch (balanceError) {
+                console.warn('⚠️ Errore balance:', balanceError.message);
                 setBalance(50.00);
             }
 
-            // ✅ RENTALS - APPROCCIO SEMPLICE
+            // ✅ RENTALS - CARICA DAL LOCALSTORAGE
             try {
-                const rentalsResponse = await fetch('http://localhost:5003/api/rentals/my-rentals', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
+                console.log('📡 Caricamento rentals dal localStorage...');
+                const storedRentals = JSON.parse(localStorage.getItem('userRentals') || '[]');
+                console.log('📦 Dati RAW dal localStorage:', storedRentals);
+                
+                // Filtra solo i noleggi attivi (non scaduti)
+                const activeRentals = storedRentals.filter(rental => {
+                    if (!rental.expirationDate) return false;
+                    
+                    const expirationDate = new Date(rental.expirationDate);
+                    const now = new Date();
+                    const isActive = expirationDate > now;
+                    
+                    console.log(`🎬 Film: ${rental.movieTitle}, Scadenza: ${expirationDate}, Attivo: ${isActive}`);
+                    return isActive;
                 });
                 
-                if (rentalsResponse.ok) {
-                    const rentalsData = await rentalsResponse.json();
-                    console.log('✅ Dati rentals ricevuti:', rentalsData);
-                    
-                    // Gestisci diverse strutture di risposta
-                    if (rentalsData.rentals && Array.isArray(rentalsData.rentals)) {
-                        setRentals(rentalsData.rentals);
-                    } else if (Array.isArray(rentalsData)) {
-                        setRentals(rentalsData);
-                    } else if (rentalsData.success && rentalsData.data) {
-                        setRentals(rentalsData.data);
-                    } else {
-                        setRentals([]);
-                    }
-                } else {
-                    setRentals([]);
-                }
+                console.log(`✅ ${activeRentals.length} noleggi attivi dal localStorage:`, activeRentals);
+                setRentals(activeRentals);
+                
             } catch (rentalsError) {
-                console.error('Errore rentals:', rentalsError);
+                console.warn('⚠️ Errore caricamento rentals dal localStorage:', rentalsError);
                 setRentals([]);
             }
 
         } catch (err) {
-            console.error("Errore critico:", err);
+            console.error("❌ Errore critico:", err);
             setError("Errore nel caricamento dei dati: " + err.message);
         } finally {
             setLoading(false);
@@ -103,16 +99,21 @@ const UserProfileSection = ({ onBack, onNavigate }) => {
 
     const handleRefresh = () => {
         console.log('👤 Refresh manuale');
-        fetchUserData(); // ✅ Ricarica semplice
+        fetchUserData();
     };
 
     // ✅ RENDERIZZA I NOLEGGI DINAMICAMENTE
     const renderRentals = () => {
+        console.log('🎬 Rendering rentals:', rentals);
+        
         if (rentals.length === 0) {
             return (
                 <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
                     <Film className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-500 text-lg">Nessun noleggio attivo</p>
+                    <p className="text-gray-400 text-sm mt-2">
+                        I noleggi acquistati appariranno qui automaticamente
+                    </p>
                 </div>
             );
         }
@@ -120,30 +121,59 @@ const UserProfileSection = ({ onBack, onNavigate }) => {
         return (
             <div className="rentals-grid">
                 {rentals.map((rental, index) => {
-                    const expirationDate = rental.expirationDate || rental.expiresAt;
-                    const rentalDate = rental.rentalDate || rental.createdAt;
+                    console.log('🎬 Rendering rental:', rental);
+                    
+                    const expirationDate = new Date(rental.expirationDate);
+                    const rentalDate = new Date(rental.rentalDate || rental.createdAt);
+                    const now = new Date();
+                    const hoursRemaining = Math.floor((expirationDate - now) / (1000 * 60 * 60));
+                    
+                    let status, statusText, statusIcon, statusClass;
+                    
+                    if (hoursRemaining <= 0) {
+                        status = 'expired';
+                        statusText = 'Scaduto';
+                        statusIcon = <AlertTriangle className="w-4 h-4 inline mr-1" />;
+                        statusClass = 'expired';
+                    } else if (hoursRemaining <= 24) {
+                        status = 'warning';
+                        statusText = `Scade in ${hoursRemaining}h`;
+                        statusIcon = <Clock className="w-4 h-4 inline mr-1" />;
+                        statusClass = 'warning';
+                    } else {
+                        status = 'active';
+                        const daysRemaining = Math.floor(hoursRemaining / 24);
+                        statusText = `Scade in ${daysRemaining} giorni`;
+                        statusIcon = <CheckCircle className="w-4 h-4 inline mr-1" />;
+                        statusClass = 'active';
+                    }
                     
                     return (
-                        <div key={rental._id || rental.movieId || index} className="rental-card">
+                        <div key={rental.id || `rental-${index}`} className="rental-card">
                             <div className="flex justify-between items-start mb-3">
                                 <h3 className="rental-title">
                                     {rental.movieTitle || rental.title || 'Film senza titolo'}
                                 </h3>
-                                <span className="rental-status active">
-                                    <CheckCircle className="w-4 h-4 inline mr-1" />
-                                    Attivo
+                                <span className={`rental-status ${statusClass}`}>
+                                    {statusIcon}
+                                    {statusText}
                                 </span>
                             </div>
                             
                             <div className="rental-details">
                                 <div className="rental-detail">
                                     <Calendar className="w-4 h-4 text-gray-500" />
-                                    <span>Iniziato: {new Date(rentalDate).toLocaleDateString()}</span>
+                                    <span>Acquistato: {rentalDate.toLocaleDateString('it-IT')}</span>
                                 </div>
-                                {expirationDate && (
+                                <div className="rental-detail">
+                                    <Clock className="w-4 h-4 text-gray-500" />
+                                    <span>Scade: {expirationDate.toLocaleDateString('it-IT')}</span>
+                                </div>
+                                {rental.price && (
                                     <div className="rental-detail">
-                                        <Clock className="w-4 h-4 text-gray-500" />
-                                        <span>Scade: {new Date(expirationDate).toLocaleDateString()}</span>
+                                        <span className="text-green-600 font-semibold">
+                                            Prezzo: €{rental.price.toFixed(2)}
+                                        </span>
                                     </div>
                                 )}
                             </div>
