@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import './FilmCatalog.css';
 
-const FilmCatalog = () => {
+const FilmCatalog = ({ onBack }) => {  // ✅ Ricevi onBack come prop invece di useNavigate
   const [films, setFilms] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isAdding, setIsAdding] = useState(false);
@@ -20,7 +19,6 @@ const FilmCatalog = () => {
     category: '',
     releaseYear: ''
   });
-  const navigate = useNavigate();
 
   // URL base dell'API per i film
   const API_BASE = 'http://localhost:5002/api/movies';
@@ -181,8 +179,6 @@ const FilmCatalog = () => {
         category: editingFilm.genre,
         releaseYear: parseInt(editingFilm.releaseYear || editingFilm.year || 0),
         id: editingFilm.id
-        
-    
       };
 
       const response = await fetch(`${API_BASE}/${editingFilm.id}`, {
@@ -225,12 +221,22 @@ const FilmCatalog = () => {
     }
   };
 
+  // ✅ FUNZIONE PER TORNARE ALLA DASHBOARD
+  const handleBackToDashboard = () => {
+    if (onBack) {
+      onBack(); // Usa la prop
+    } else {
+      // Fallback se la prop non è disponibile
+      window.location.href = '/#/dashboard';
+    }
+  };
+
   return (
     <div className="film-catalog">
       <header className="catalog-header">
         <h1>Catalogo Film</h1>
         <div>
-          <button className="logout-btn" onClick={() => navigate('/dashboard')}>
+          <button className="logout-btn" onClick={handleBackToDashboard}>
             Torna alla Dashboard
           </button>
         </div>
@@ -247,7 +253,6 @@ const FilmCatalog = () => {
         </div>
       )}
 
-     
       <div className="catalog-controls">
         <div className="search-box">
           <i className="fas fa-search"></i>
@@ -258,11 +263,9 @@ const FilmCatalog = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        
       </div>
 
-
-      {/* Form per modificare{ un film esistente */}
+      {/* Form per modificare un film esistente */}
       {editingFilm && (
         <div className="film-form">
           <h3>Modifica Film</h3>

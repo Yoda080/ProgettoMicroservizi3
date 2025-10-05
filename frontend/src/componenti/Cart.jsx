@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, ArrowLeft, Trash2, CheckCircle, Film, DollarSign, Loader, AlertTriangle, Wallet } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { useWallet } from './useWallet';
 
 const RENTAL_CHECKOUT_API_URL = 'http://localhost:5003/api/rentals/checkout';
 
-const Cart = () => {
-    const navigate = useNavigate(); 
+const Cart = ({ onBack, onNavigate }) => {
     const { 
         balance, 
         isLoading: isWalletLoading, 
@@ -21,6 +19,24 @@ const Cart = () => {
     const [isProcessing, setIsProcessing] = useState(false);
     const [message, setMessage] = useState('');
     const [messageType, setMessageType] = useState('info');
+
+    // ✅ FUNZIONE PER NAVIGARE - SENZA FALLBACK
+    const navigateTo = (view) => {
+        console.log('🛒 Navigazione a:', view);
+        if (onNavigate) {
+            onNavigate(view);
+        }
+        // ❌ RIMOSSO window.location.href - CAUSA 404
+    };
+
+    // ✅ FUNZIONE PER TORNARE INDIETRO - SENZA FALLBACK
+    const handleBack = () => {
+        console.log('🛒 Torno indietro');
+        if (onBack) {
+            onBack();
+        }
+        // ❌ RIMOSSO window.location.href - CAUSA 404
+    };
 
     // Funzione per mostrare messaggi
     const displayMessage = (text, type) => {
@@ -83,7 +99,7 @@ const Cart = () => {
         const authToken = localStorage.getItem('authToken');
         if (!authToken) {
             displayMessage("Errore di autenticazione. Effettua il login.", 'error');
-            navigate('/login');
+            navigateTo('login');
             return;
         }
 
@@ -141,7 +157,7 @@ const Cart = () => {
             );
 
             setTimeout(() => {
-                navigate('/rentals');
+                navigateTo('rentals');
             }, 3000);
 
         } catch (error) {
@@ -149,7 +165,7 @@ const Cart = () => {
             
             if (error.message.includes("UNAUTHORIZED")) {
                 displayMessage("Sessione scaduta. Effettua nuovamente il login.", 'error');
-                navigate('/login');
+                navigateTo('login');
             } else {
                 displayMessage(`Checkout fallito: ${error.message}`, 'error');
             }
@@ -211,7 +227,7 @@ const Cart = () => {
                             Il Tuo Carrello
                         </h1>
                         <button
-                            onClick={() => navigate('/rentals')}
+                            onClick={handleBack}
                             className="bg-green-700 hover:bg-green-800 text-white font-semibold py-3 px-6 rounded-lg flex items-center transition-colors shadow-md"
                         >
                             <ArrowLeft className="w-5 h-5 mr-2" />
@@ -229,7 +245,7 @@ const Cart = () => {
                         <h2 className="text-2xl font-semibold text-gray-600 mb-3">Il carrello è vuoto</h2>
                         <p className="text-gray-500 mb-6">Aggiungi alcuni film dalla sezione noleggi!</p>
                         <button
-                            onClick={() => navigate('/rentals')}
+                            onClick={() => navigateTo('rentals')}
                             className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors shadow-md"
                         >
                             Esplora Film

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './Registrazione.css';
 
-const Registrazione = ({ onRegister, onSwitchToLogin }) => {
+const Registrazione = ({ onRegisterSuccess, onSwitchToLogin }) => {  // ✅ Corretto il nome della prop
   const [formData, setFormData] = useState({
     nome: '',
     cognome: '',
@@ -47,13 +47,27 @@ const Registrazione = ({ onRegister, onSwitchToLogin }) => {
       return;
     }
 
-    // Struttura dei dati per l'API di registrazione del backend
+    // Validazione email
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(formData.email)) {
+      setError('Inserisci un indirizzo email valido');
+      setLoading(false);
+      return;
+    }
+
+    // ⚠️ STRUTTURA DATI PER IL BACKEND
     const registrationData = {
-      username: formData.email, // Il tuo backend usa 'username' per l'email
+      username: `${formData.nome.toLowerCase()}.${formData.cognome.toLowerCase()}`,
+      email: formData.email,
       password: formData.password,
-      firstName: formData.nome,
-      lastName: formData.cognome
+      confirmPassword: formData.confermaPassword
     };
+
+    console.log('📨 Dati inviati al backend:', {
+      ...registrationData,
+      password: '***',
+      confirmPassword: '***'
+    });
 
     try {
       const response = await fetch('http://localhost:5001/api/Auth/register', {
@@ -64,26 +78,75 @@ const Registrazione = ({ onRegister, onSwitchToLogin }) => {
         body: JSON.stringify(registrationData)
       });
 
+      console.log('📨 Status risposta:', response.status, response.statusText);
+
+      const responseData = await response.json();
+      console.log('📨 Dati risposta:', responseData);
+
       if (response.ok) {
-        setSuccess('Registrazione avvenuta con successo! Puoi ora accedere.');
-        setFormData({
-          nome: '',
-          cognome: '',
-          email: '',
-          password: '',
-          confermaPassword: ''
-        });
-        // onRegister(await response.json());
-      } else if (response.status === 409) {
-        setError('Email già in uso. Prova ad accedere o usa un altro indirizzo.');
+        console.log('✅ Registrazione completata:', responseData);
+        
+        // ⚠️ VERIFICA SE IL TOKEN È PRESENTE
+        if (responseData.token) {
+          // Salva il token e i dati utente
+          localStorage.setItem('authToken', responseData.token);
+          localStorage.setItem('userId', responseData.userId || responseData.id || 'unknown');
+          localStorage.setItem('username', responseData.username || formData.email);
+          
+          setSuccess('Registrazione avvenuta con successo! Reindirizzamento...');
+          
+          // Debug del token salvato
+          try {
+            const tokenPayload = JSON.parse(atob(responseData.token.split('.')[1]));
+            console.log('🔐 Token salvato - Payload:', tokenPayload);
+          } catch (tokenError) {
+            console.error('❌ Errore parsing token:', tokenError);
+          }
+          
+          // Reset form
+          setFormData({
+            nome: '',
+            cognome: '',
+            email: '',
+            password: '',
+            confermaPassword: ''
+          });
+          
+          // ✅ CORRETTO: Usa la prop invece di window.location.href
+          setTimeout(() => {
+            if (onRegisterSuccess) {
+              console.log('🔄 Chiamando onRegisterSuccess...');
+              onRegisterSuccess(responseData);
+            } else {
+              console.error('❌ onRegisterSuccess non disponibile');
+              // Fallback sicuro senza refresh
+              window.location.reload();
+            }
+          }, 2000);
+          
+        } else {
+          setError('Token non ricevuto dal server. La registrazione potrebbe non essere completa.');
+          console.error('❌ Token mancante nella risposta:', responseData);
+        }
+        
       } else {
-        const errorData = await response.json();
-        setError(errorData.message || 'Errore durante la registrazione. Riprova più tardi.');
+        // Gestione errori specifici
+        if (response.status === 409) {
+          setError('Email o username già in uso. Prova ad accedere o usa un altro indirizzo.');
+        } else if (response.status === 400) {
+          setError(responseData.message || 'Dati non validi. Controlla i campi inseriti.');
+        } else if (response.status === 500) {
+          setError('Errore interno del server. Riprova più tardi.');
+        } else {
+          setError(responseData.message || `Errore durante la registrazione (${response.status}). Riprova più tardi.`);
+        }
+        
+        console.error('❌ Errore registrazione:', responseData);
       }
 
     } catch (error) {
-      console.error('Errore di rete:', error);
-      setError('Impossibile connettersi al server. Verifica la tua connessione.');
+      console.error('❌ Errore di rete:', error);
+      setError('Impossibile connettersi al server. Verifica che: 1) Il backend .NET sia in esecuzione, 2) La porta 5001 sia libera, 3) Il endpoint /api/Auth/register esista.');
     } finally {
       setLoading(false);
     }
@@ -94,11 +157,19 @@ const Registrazione = ({ onRegister, onSwitchToLogin }) => {
       <div className="registrazione-card">
         <h2>Crea il tuo account</h2>
         
-        {error && <div className="error-message">{error}</div>}
-        {success && <div className="success-message">{success}</div>}
+        {error && (
+          <div className="error-message">
+            <strong>Errore:</strong> {error}
+          </div>
+        )}
+        
+        {success && (
+          <div className="success-message">
+            <strong>Successo!</strong> {success}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
-          {/* Campi del modulo */}
           <div className="form-group">
             <label htmlFor="nome">Nome</label>
             <input
@@ -109,6 +180,7 @@ const Registrazione = ({ onRegister, onSwitchToLogin }) => {
               onChange={handleChange}
               placeholder="Inserisci il tuo nome"
               required
+              disabled={loading}
             />
           </div>
 
@@ -122,6 +194,7 @@ const Registrazione = ({ onRegister, onSwitchToLogin }) => {
               onChange={handleChange}
               placeholder="Inserisci il tuo cognome"
               required
+              disabled={loading}
             />
           </div>
 
@@ -133,8 +206,9 @@ const Registrazione = ({ onRegister, onSwitchToLogin }) => {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              placeholder="Inserisci la tua email"
+              placeholder="esempio@email.com"
               required
+              disabled={loading}
             />
           </div>
 
@@ -146,8 +220,10 @@ const Registrazione = ({ onRegister, onSwitchToLogin }) => {
               name="password"
               value={formData.password}
               onChange={handleChange}
-              placeholder="Crea una password (min. 6 caratteri)"
+              placeholder="Minimo 6 caratteri"
               required
+              disabled={loading}
+              minLength="6"
             />
           </div>
 
@@ -159,8 +235,9 @@ const Registrazione = ({ onRegister, onSwitchToLogin }) => {
               name="confermaPassword"
               value={formData.confermaPassword}
               onChange={handleChange}
-              placeholder="Conferma la tua password"
+              placeholder="Ripeti la password"
               required
+              disabled={loading}
             />
           </div>
 
@@ -169,13 +246,45 @@ const Registrazione = ({ onRegister, onSwitchToLogin }) => {
             className="registrazione-button"
             disabled={loading}
           >
-            {loading ? 'Registrazione in corso...' : 'Registrati'}
+            {loading ? (
+              <>
+                <span className="spinner"></span>
+                Registrazione in corso...
+              </>
+            ) : (
+              'Registrati'
+            )}
           </button>
         </form>
 
         <div className="switch-auth">
-          <p>Hai già un account? <span onClick={onSwitchToLogin}>Accedi</span></p>
+          <p>Hai già un account? 
+            <span 
+              onClick={loading ? null : onSwitchToLogin} 
+              className="switch-link"
+              style={{ 
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.5 : 1
+              }}
+            >
+              Accedi
+            </span>
+          </p>
         </div>
+
+        {/* Debug info - Solo in sviluppo */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="debug-info">
+            <strong>Debug Info:</strong><br/>
+            Backend: http://localhost:5001/api/Auth/register<br/>
+            Dati inviati: {JSON.stringify({
+              username: `${formData.nome.toLowerCase()}.${formData.cognome.toLowerCase()}`,
+              email: formData.email,
+              password: '***',
+              confirmPassword: '***'
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

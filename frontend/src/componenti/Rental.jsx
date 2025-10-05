@@ -1,19 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import { Film, ShoppingCart, LogOut, Home, ArrowRight, Loader, AlertTriangle } from 'lucide-react';
-// Importa il vero hook di navigazione per far funzionare i pulsanti
-import { useNavigate } from 'react-router-dom'; 
 
 // 🛑 URL REALE DEL MICROSERVIZIO MOVIECATALOG
 const MOVIE_CATALOG_API_URL = 'http://localhost:5002/api/movies'; 
 
-const Rental = () => {
-    const navigate = useNavigate(); 
+const Rental = ({ onBack, onNavigate }) => {  // ✅ Ricevi le props invece di useNavigate
     const CART_STORAGE_KEY = 'movieCart';
     
     const [films, setFilms] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null); 
     const [cartCount, setCartCount] = useState(0);
+
+    // ✅ FUNZIONE PER NAVIGARE
+    const navigateTo = (view) => {
+        if (onNavigate) {
+            onNavigate(view);
+        } else {
+            // Fallback
+            window.location.href = `/#/${view}`;
+        }
+    };
+
+    // ✅ FUNZIONE PER TORNARE ALLA DASHBOARD
+    const handleBackToDashboard = () => {
+        if (onBack) {
+            onBack();
+        } else {
+            navigateTo('dashboard');
+        }
+    };
+
+    // ✅ FUNZIONE PER LOGOUT
+    const handleLogout = () => {
+        localStorage.removeItem('authToken');
+        navigateTo('login');
+    };
 
     // Stili CSS (invariati, ma cruciali per l'estetica)
     const cssStyles = `
@@ -80,8 +102,8 @@ const Rental = () => {
             if (!authToken) {
                 setError("Non autorizzato. Token di accesso mancante.");
                 setLoading(false);
-                // Potresti voler reindirizzare l'utente al login qui
-                // navigate('/login'); 
+                // ✅ Usa la funzione di navigazione invece di useNavigate
+                navigateTo('login');
                 return;
             }
 
@@ -101,7 +123,7 @@ const Rental = () => {
                          // Token scaduto o non valido
                         setError("Sessione scaduta o non valida. Effettua nuovamente il login.");
                         localStorage.removeItem('authToken');
-                        navigate('/login');
+                        navigateTo('login');
                         return;
                     }
                     throw new Error(`Errore HTTP: ${response.status} - ${response.statusText}. Dettagli: ${errorText.substring(0, 100)}...`);
@@ -123,7 +145,6 @@ const Rental = () => {
                     id: movie.id || movie.title, 
                 }));
 
-
                 setFilms(processedFilms);
             } catch (err) {
                 console.error("Errore nel recupero dei film dal catalogo:", err.message);
@@ -135,7 +156,7 @@ const Rental = () => {
             }
         };
         loadFilms();
-    }, [navigate]); // navigate è una dipendenza perché viene usata all'interno
+    }, [onNavigate]); // ✅ Cambia navigate con onNavigate
 
     // 2. Logica Carrello (Badge e aggiornamento)
     const updateCartCount = () => {
@@ -186,7 +207,7 @@ const Rental = () => {
     
     // 4. Funzione per navigare al carrello
     const goToCart = () => {
-        navigate('/cart'); 
+        navigateTo('cart'); // ✅ Usa la funzione helper
     };
 
     // Gestione dello stato di Caricamento
@@ -221,7 +242,6 @@ const Rental = () => {
         );
     }
 
-
     return (
         <div className="rental-container">
             <style>{cssStyles}</style>
@@ -248,14 +268,14 @@ const Rental = () => {
 
                     {/* Altri Pulsanti di Navigazione */}
                     <button 
-                        onClick={() => navigate('/dashboard')} 
+                        onClick={handleBackToDashboard} 
                         className="bg-gray-700 hover:bg-gray-600 text-white p-2 rounded-full shadow-md transition"
                         title="Dashboard"
                     >
                         <Home className="w-5 h-5" />
                     </button>
                     <button 
-                        onClick={() => { localStorage.removeItem('authToken'); navigate('/login'); }} 
+                        onClick={handleLogout} 
                         className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-full shadow-md transition"
                         title="Logout"
                     >

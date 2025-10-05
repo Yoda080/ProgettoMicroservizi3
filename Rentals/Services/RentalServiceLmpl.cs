@@ -7,6 +7,19 @@ namespace RentalService.Services
     public interface IRentalService
     {
         Task<bool> CreateRentalAsync(string userId, List<int> movieIds, decimal totalAmount);
+        Task<List<UserRentalDto>> GetUserRentalsAsync(string userId);
+    }
+
+    // 🟢 AGGIUNGI: DTO per i noleggi utente
+    public class UserRentalDto
+    {
+        public int Id { get; set; }
+        public int MovieId { get; set; }
+        public DateTime RentedAt { get; set; }
+        public DateTime DueDate { get; set; }
+        public decimal TotalPrice { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public int DaysRemaining { get; set; }
     }
 
     public class RentalServiceImpl : IRentalService
@@ -26,11 +39,6 @@ namespace RentalService.Services
             {
                 _logger.LogInformation("🎬 Creazione noleggi per user {UserId} con {MovieCount} film: {MovieIds}", 
                     userId, movieIds.Count, string.Join(", ", movieIds));
-
-                // 🟢 DEBUG: Verifica la connessione al database
-                _logger.LogInformation("🔍 Verifica connessione database...");
-                var canConnect = await _context.Database.CanConnectAsync();
-                _logger.LogInformation("✅ Connessione database: {CanConnect}", canConnect);
 
                 var rentals = new List<Rental>();
                 
@@ -67,6 +75,38 @@ namespace RentalService.Services
                 _logger.LogError("❌ StackTrace: {StackTrace}", ex.StackTrace);
                 _logger.LogError("❌ InnerException: {InnerException}", ex.InnerException?.Message);
                 return false;
+            }
+        }
+
+        // 🟢 AGGIUNGI: Implementazione del metodo per ottenere i noleggi dell'utente
+        public async Task<List<UserRentalDto>> GetUserRentalsAsync(string userId)
+        {
+            try
+            {
+                _logger.LogInformation("📋 Recupero noleggi per user: {UserId}", userId);
+
+                var rentals = await _context.Rentals
+                    .Where(r => r.UserId == userId && r.Status == "Active")
+                    .OrderByDescending(r => r.RentedAt)
+                    .Select(r => new UserRentalDto
+                    {
+                        Id = r.Id,
+                        MovieId = r.MovieId,
+                        RentedAt = r.RentedAt,
+                        DueDate = r.DueDate,
+                        TotalPrice = r.TotalPrice,
+                        Status = r.Status,
+                        DaysRemaining = (r.DueDate - DateTime.UtcNow).Days
+                    })
+                    .ToListAsync();
+
+                _logger.LogInformation("✅ Trovati {Count} noleggi per user {UserId}", rentals.Count, userId);
+                return rentals;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Errore nel recupero noleggi per user {UserId}", userId);
+                throw;
             }
         }
     }

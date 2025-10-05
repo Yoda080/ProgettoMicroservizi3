@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useContext, createContext } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 // 🛑 URL del microservizio Bank/Payments
 const BANK_SERVICE_URL = 'http://localhost:5004/api/payments';
@@ -11,7 +10,7 @@ const WalletContext = createContext();
 const safeFetch = async (url, config) => {
     const response = await fetch(url, config);
     
-    // Gestione errore 401: Token non valido (da gestire esternamente)
+    // Gestione errore 401: Token non valido
     if (response.status === 401) {
         throw new Error("UNAUTHORIZED"); 
     }
@@ -27,14 +26,19 @@ const safeFetch = async (url, config) => {
 };
 
 // 2. Hook Personalizzato: useWallet
-export const useWallet = () => useContext(WalletContext);
+export const useWallet = () => {
+    const context = useContext(WalletContext);
+    if (!context) {
+        throw new Error('useWallet deve essere usato dentro un WalletProvider');
+    }
+    return context;
+};
 
-// 3. Provider: WalletProvider
+// 3. Provider: WalletProvider (SENZA useNavigate)
 export const WalletProvider = ({ children }) => {
     const [balance, setBalance] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [walletError, setWalletError] = useState(null);
-    const navigate = useNavigate();
     
     const token = localStorage.getItem('authToken');
 
@@ -61,7 +65,9 @@ export const WalletProvider = ({ children }) => {
         } catch (err) {
             if (err.message === "UNAUTHORIZED") {
                 localStorage.removeItem('authToken');
-                navigate('/login');
+                // ⚠️ NON usare navigate qui - gestiscilo nei componenti
+                console.log('🔐 Token scaduto, redirect al login necessario');
+                setWalletError("Sessione scaduta. Rieffettua il login.");
             } else {
                 setWalletError(`Errore nel caricamento saldo: ${err.message}`);
                 setBalance(0);
@@ -87,14 +93,15 @@ export const WalletProvider = ({ children }) => {
         try {
             const data = await safeFetch(`${BANK_SERVICE_URL}/debit`, config);
             // Assumiamo che l'API restituisca il nuovo saldo
-            const newBalance = data.newBalance; 
+            const newBalance = data.newBalance || data.balance; 
             setBalance(newBalance); 
             return newBalance;
 
         } catch (err) {
-             if (err.message === "UNAUTHORIZED") {
+            if (err.message === "UNAUTHORIZED") {
                 localStorage.removeItem('authToken');
-                navigate('/login');
+                // ⚠️ NON usare navigate qui
+                console.log('🔐 Token scaduto durante pagamento');
                 throw new Error("UNAUTHORIZED");
             }
             throw new Error(err.message || "Errore sconosciuto durante il debito.");
@@ -104,15 +111,15 @@ export const WalletProvider = ({ children }) => {
     // Carica il saldo all'avvio
     useEffect(() => {
         fetchBalance();
-    }, [token, navigate]);
+    }, [token]); // ⚠️ Rimuovi navigate dalle dipendenze
 
     // Oggetto valore del context
     const contextValue = {
         balance,
         isLoading,
         walletError,
-        fetchBalance, // Ricarica manuale
-        debitWallet, // Funzione di pagamento
+        fetchBalance,
+        debitWallet,
     };
 
     return (

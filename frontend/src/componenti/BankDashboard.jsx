@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Dashboard.css';
 
 // URL del tuo Bank Service
 const BANK_SERVICE_URL = 'http://localhost:5004/api/payments';
 
-const BankDashboard = () => {
-    const navigate = useNavigate();
+const BankDashboard = ({ onBack }) => {  // ✅ Ricevi onBack come prop invece di useNavigate
     const token = localStorage.getItem('authToken');
     
     const [balance, setBalance] = useState(null);
@@ -17,11 +15,25 @@ const BankDashboard = () => {
 
     useEffect(() => {
         if (!token) {
-            navigate('/login');
+            // ✅ Usa la navigazione manuale invece di useNavigate
+            if (onBack) {
+                onBack();
+            } else {
+                window.location.href = '/#/login';
+            }
             return;
         }
         fetchBalance();
-    }, [token, navigate]);
+    }, [token, onBack]);  // ✅ Aggiungi onBack alle dipendenze
+
+    // ✅ FUNZIONE PER TORNARE ALLA DASHBOARD
+    const handleBackToDashboard = () => {
+        if (onBack) {
+            onBack();
+        } else {
+            window.location.href = '/#/dashboard';
+        }
+    };
 
     // Funzione per recuperare il saldo dal Bank Service
     const fetchBalance = async () => {
@@ -96,7 +108,7 @@ const BankDashboard = () => {
     return (
         <div className="bank-container">
             <button 
-                onClick={() => navigate('/dashboard')} 
+                onClick={handleBackToDashboard}  // ✅ Usa la funzione helper
                 className="back-button"
             >
                 &larr; Torna alla Dashboard
