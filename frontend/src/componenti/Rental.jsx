@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Film, ShoppingCart, LogOut, Home, ArrowRight, Loader, AlertTriangle } from 'lucide-react';
-import './Dashboard.css'; // ✅ Importa il CSS esterno
+
 
 const MOVIE_CATALOG_API_URL = 'http://localhost:5002/api/movies'; 
 

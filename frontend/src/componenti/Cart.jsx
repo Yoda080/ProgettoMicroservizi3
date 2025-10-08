@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, ArrowLeft, Trash2, CheckCircle, Film, DollarSign, Loader, AlertTriangle, Wallet } from 'lucide-react';
 import { useWallet } from './useWallet';
-import './Dashboard.css';
+
 
 const Cart = ({ onBack, onNavigate }) => {
     const { 

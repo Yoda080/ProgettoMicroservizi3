@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './Dashboard.css';
+
 
 const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
     const [isLoginForm, setIsLoginForm] = useState(true);

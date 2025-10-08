@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import './Dashboard.css';
+
 
 const BANK_SERVICE_URL = 'http://localhost:5004/api/payments';
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Film, Calendar, Clock, AlertTriangle, CheckCircle, RefreshCw } from 'lucide-react';
-import './Dashboard.css';
+
 
 const UserProfileSection = ({ onBack, onNavigate }) => {
     const token = localStorage.getItem('authToken');
